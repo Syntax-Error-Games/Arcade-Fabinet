@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Arcade Cabinet</title>
 <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -467,7 +469,34 @@
   .map-row .map-where{font:10px monospace;color:#6f668c;flex-shrink:0;min-width:74px;text-align:right;}
   #map-close-btn{display:block;margin:0 auto;font-family:'Press Start 2P',monospace;font-size:.5rem;padding:10px 18px;background:#00e5a0;color:#050505;border:none;border-radius:4px;cursor:pointer;}
 
-  /* ---------- fullscreen ---------- */
+  /* ---------- mobile Safari toolbar tip ---------- */
+#safari-toolbar-tip{
+  display:none;
+  position:fixed;
+  left:50%;
+  bottom:calc(14px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  z-index:10000;
+  width:min(92vw,520px);
+  padding:10px 13px;
+  box-sizing:border-box;
+  font-family:'Press Start 2P',monospace;
+  font-size:.48rem;
+  line-height:1.7;
+  text-align:center;
+  color:#eae6ff;
+  background:rgba(10,6,18,.92);
+  border:2px solid #7a6aa8;
+  border-radius:4px;
+  box-shadow:0 4px 18px rgba(0,0,0,.45);
+}
+html.ios-safari-tip #safari-toolbar-tip{display:block;}
+html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-bottom));}
+@supports not (height:100dvh){
+  html.ios-safari-tip #fullscreen-btn{bottom:86px;}
+}
+
+/* ---------- fullscreen / iPhone immersive fallback ---------- */
   #fullscreen-btn{
     position:fixed; right:14px; top:198px; z-index:52;
     font-family:'Press Start 2P', monospace; font-size:.5rem;
@@ -478,12 +507,48 @@
   #fullscreen-btn:hover{ border-color:#eae6ff; }
   body.game-playing #fullscreen-btn{ top:244px; opacity:.22; }
   body.game-playing #fullscreen-btn:hover{ opacity:1; }
-  /* while fullscreen the button hides itself; Esc or F11 brings it back.
-     Mobile has no such key, so on a touch device the button stays put and
-     relabels itself as an exit control instead (see .is-exit below). */
   body.is-fullscreen:not(.mobile-mode) #fullscreen-btn{ display:none !important; }
   #fullscreen-btn.is-exit{ color:#ff6a6a; border-color:#ff6a6a; }
   #fullscreen-btn.is-exit:hover{ border-color:#ff9a9a; }
+
+  /* iPhone Safari cannot put arbitrary HTML into true browser fullscreen.
+     This fallback fills the available dynamic viewport and removes our own
+     page chrome, giving the game the largest possible touch play area. */
+  html.ios-immersive,
+  html.ios-immersive body{
+    width:100%;
+    height:100%;
+    min-height:100%;
+    overflow:hidden;
+  }
+  html.ios-immersive #app,
+  html.ios-immersive #game-overlay{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100dvh;
+    min-height:100%;
+  }
+  html.ios-immersive #fullscreen-btn{
+    top:auto;
+    right:calc(14px + env(safe-area-inset-right));
+    bottom:calc(14px + env(safe-area-inset-bottom));
+    opacity:.72;
+    z-index:9999;
+  }
+  html.ios-immersive #fullscreen-btn.is-exit{
+    display:block !important;
+  }
+  @supports not (height:100dvh){
+    html.ios-immersive #app,
+    html.ios-immersive #game-overlay{ height:100vh; }
+  }
+
+  /* When launched from the iPhone Home Screen, Safari can actually run the
+     site without its browser chrome. */
+  @media (display-mode: standalone), (display-mode: fullscreen){
+    #fullscreen-btn{ display:none !important; }
+  }
 
   /* ---------- embedded-copy notice ---------- */
   #embed-banner{
@@ -641,6 +706,11 @@
 <button id="leaderboard-btn">&#127942; STATS</button>
 <button id="feedback-btn">&#128172; FEEDBACK</button>
 <button id="map-btn">&#128506; FLOOR</button>
+<div id="safari-toolbar-tip" role="status">
+  <b>SAFARI TIP</b><br>
+  To hide Safari's toolbar, tap the <b>page settings icon (aA)</b>
+  by the address bar and choose <b>Hide Toolbar</b>.
+</div>
 <button id="fullscreen-btn">&#9974; FULLSCREEN</button>
 
 <div id="embed-banner">
@@ -741,7 +811,7 @@
         <option>Bug report</option><option>Game request</option><option>Cosmetic idea</option><option>Room / UI idea</option><option>Other</option>
       </select></label>
       <label>MESSAGE<textarea id="feedback-message" rows="6" maxlength="2000" placeholder="Tell me what you noticed..."></textarea></label>
-      <label>CONTACT (OPTIONAL)<input id="feedback-contact" maxlength="120" placeholder="email or Discord"></label>
+      <label>CONTACT *<input id="feedback-contact" maxlength="120" placeholder="email or Discord" required autocomplete="email"></label>
       <div class="feedback-actions"><button type="submit" id="feedback-submit">SEND FEEDBACK</button><button type="button" id="feedback-close-btn">CANCEL</button></div>
       <div class="feedback-note" id="feedback-note">Feedback is greatly appreciated! If you have more than one thing to report or suggest, please report it in one message.</div>
     </form>
@@ -1979,6 +2049,11 @@
     e.preventDefault();
     const payload={type:document.getElementById('feedback-type').value,message:document.getElementById('feedback-message').value.trim(),contact:document.getElementById('feedback-contact').value.trim(),page:location.href,time:new Date().toISOString()};
     if(!payload.message){feedbackNote.textContent='PLEASE ENTER A MESSAGE.'; return;}
+    if(!payload.contact){
+      feedbackNote.textContent='PLEASE ENTER A CONTACT METHOD (EMAIL OR DISCORD).';
+      document.getElementById('feedback-contact').focus();
+      return;
+    }
     try{
       const saved=JSON.parse(localStorage.getItem('neonArcade.feedbackInbox')||'[]');
       saved.unshift(payload);
@@ -3301,75 +3376,142 @@
     if (AudioEngine.isMuted()) { AudioEngine.setMuted(false); refreshMuteBtn(); }
   });
 
-  // ---- fullscreen. On desktop the button removes itself once you're
-  // fullscreen (Esc or F11 is the way out) and reappears the moment you
-  // leave. Phones have no Esc key, so on a touch device the button instead
-  // stays put and relabels itself into an explicit exit control. Inside an
-  // iframe without the `allowfullscreen` attribute the request is refused,
-  // so the button hides entirely rather than sitting there doing nothing.
+  // ---- fullscreen -------------------------------------------------------
+  // Desktop/iPad browsers can use the Fullscreen API. iPhone Safari still
+  // does not allow arbitrary HTML elements (including the arcade/WebGL scene)
+  // to enter true browser fullscreen. On iPhone we therefore use an
+  // immersive viewport fallback instead. If the site is installed to the
+  // Home Screen, Safari's standalone mode provides the browser-chrome-free
+  // experience automatically.
   const fullscreenBtn = document.getElementById('fullscreen-btn');
   document.body.classList.toggle('mobile-mode', isMobile);
+  const isIPhone = /iPhone|iPod/i.test(navigator.userAgent) && !/iPad/i.test(navigator.userAgent);
+  // iPadOS can identify itself as a Mac, so also detect touch-enabled iPads.
+  const isIPad = /iPad/i.test(navigator.userAgent) ||
+                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOSMobile = isIPhone || isIPad;
+  const safariToolbarTip = document.getElementById('safari-toolbar-tip');
+
   function fullscreenElement(){
     return document.fullscreenElement || document.webkitFullscreenElement ||
            document.mozFullScreenElement || document.msFullscreenElement || null;
   }
-  function fullscreenSupported(){
+
+  function hasNativeFullscreen(){
     const el = document.documentElement;
     const has = !!(el.requestFullscreen || el.webkitRequestFullscreen ||
                    el.mozRequestFullScreen || el.msRequestFullscreen);
-    // document.fullscreenEnabled is false when a parent frame withholds permission
-    const allowed = (document.fullscreenEnabled !== false) && (document.webkitFullscreenEnabled !== false);
+    const allowed = (document.fullscreenEnabled !== false) &&
+                    (document.webkitFullscreenEnabled !== false);
     return has && allowed;
   }
+
+  function isStandalone(){
+    return window.matchMedia && (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches
+    ) || window.navigator.standalone === true;
+  }
+
+  function iosImmersiveOn(){ return document.documentElement.classList.contains('ios-immersive'); }
+
   function refreshFullscreenBtn(){
-    const on = !!fullscreenElement();
+    const nativeOn = !!fullscreenElement();
+    const immersiveOn = iosImmersiveOn();
+    const on = nativeOn || immersiveOn || isStandalone();
     document.body.classList.toggle('is-fullscreen', on);
-    if (!fullscreenSupported()) {
-      fullscreenBtn.style.display = 'none';
+
+    // iPhone Safari: use our viewport fallback instead of hiding the button.
+    if (isIOSMobile && !hasNativeFullscreen() && !isStandalone()) {
+      fullscreenBtn.style.display = 'block';
+      fullscreenBtn.innerHTML = immersiveOn ? '&#10005; EXIT IMMERSIVE' : '&#9974; FULLSCREEN';
+      fullscreenBtn.classList.toggle('is-exit', immersiveOn);
+      if (safariToolbarTip) {
+        document.documentElement.classList.toggle('ios-safari-tip', isIOSMobile && !isStandalone());
+      }
       return;
     }
+
+    if (!hasNativeFullscreen() && !isStandalone()) {
+      fullscreenBtn.style.display = 'none';
+      if (safariToolbarTip) document.documentElement.classList.remove('ios-safari-tip');
+      return;
+    }
+
     if (isMobile) {
-      // no reliable hardware/gesture way out on a phone, so keep a visible exit control
-      fullscreenBtn.style.display = 'block';
-      fullscreenBtn.innerHTML = on ? '&#10005; EXIT FULLSCREEN' : '&#9974; FULLSCREEN';
-      fullscreenBtn.classList.toggle('is-exit', on);
+      fullscreenBtn.style.display = isStandalone() ? 'none' : 'block';
+      fullscreenBtn.innerHTML = nativeOn ? '&#10005; EXIT FULLSCREEN' : '&#9974; FULLSCREEN';
+      fullscreenBtn.classList.toggle('is-exit', nativeOn);
     } else {
-      fullscreenBtn.style.display = on ? 'none' : 'block';
+      fullscreenBtn.style.display = nativeOn ? 'none' : 'block';
       fullscreenBtn.innerHTML = '&#9974; FULLSCREEN';
       fullscreenBtn.classList.remove('is-exit');
     }
   }
-  function enterFullscreen(){
+
+  function enterNativeFullscreen(){
     const el = document.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen ||
                 el.mozRequestFullScreen || el.msRequestFullscreen;
-    if (!req) return;
+    if (!req) return false;
     try {
       const r = req.call(el);
-      if (r && r.catch) r.catch(() => { refreshFullscreenBtn(); });
-    } catch(e) { refreshFullscreenBtn(); }
+      if (r && r.catch) r.catch(() => refreshFullscreenBtn());
+      return true;
+    } catch(e) {
+      refreshFullscreenBtn();
+      return false;
+    }
   }
-  function exitFullscreen(){
+
+  function exitNativeFullscreen(){
     const exit = document.exitFullscreen || document.webkitExitFullscreen ||
                  document.mozCancelFullScreen || document.msExitFullscreen;
-    if (!exit) return;
+    if (!exit) return false;
     try {
       const r = exit.call(document);
-      if (r && r.catch) r.catch(() => { refreshFullscreenBtn(); });
-    } catch(e) { refreshFullscreenBtn(); }
+      if (r && r.catch) r.catch(() => refreshFullscreenBtn());
+      return true;
+    } catch(e) {
+      refreshFullscreenBtn();
+      return false;
+    }
   }
+
+  function enterFullscreen(){
+    // iPhone Safari has no arbitrary-element Fullscreen API. Keep the user
+    // gesture synchronous and switch to the largest reliable viewport.
+    if (isIOSMobile && !hasNativeFullscreen() && !isStandalone()) {
+      document.documentElement.classList.add('ios-immersive');
+      document.body.classList.add('is-fullscreen');
+      window.scrollTo(0, 1);
+      refreshFullscreenBtn();
+      return;
+    }
+    enterNativeFullscreen();
+  }
+
+  function exitFullscreen(){
+    if (iosImmersiveOn()) {
+      document.documentElement.classList.remove('ios-immersive');
+      document.body.classList.remove('is-fullscreen');
+      refreshFullscreenBtn();
+      return;
+    }
+    exitNativeFullscreen();
+  }
+
   fullscreenBtn.addEventListener('click', () => {
     AudioEngine.click();
-    if (fullscreenElement()) exitFullscreen();
+    if (fullscreenElement() || iosImmersiveOn()) exitFullscreen();
     else enterFullscreen();
-    refreshFullscreenBtn();
   });
+
   ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange']
     .forEach(ev => document.addEventListener(ev, refreshFullscreenBtn));
-  // some browsers exit fullscreen without firing a change event we catch first
   window.addEventListener('resize', refreshFullscreenBtn);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', refreshFullscreenBtn);
   refreshFullscreenBtn();
-
 
   function reveal(){
     document.getElementById('fallback').style.display = 'none';
