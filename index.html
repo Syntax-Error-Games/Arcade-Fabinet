@@ -483,6 +483,10 @@
   .plan-cab:hover .cab-body, .plan-cab:focus-visible .cab-body, .plan-cab.hot .cab-body{fill-opacity:.85;}
   .plan-cab.here .cab-body{fill-opacity:.7;animation:planPulse 1.3s ease-in-out infinite;}
   @keyframes planPulse{50%{fill-opacity:.3;}}
+  .plan-prize{fill:#ffe600;fill-opacity:.3;stroke:#ffe600;stroke-width:1;}
+  .plan-board{fill:#22e0ff;fill-opacity:.25;stroke:#22e0ff;stroke-width:1;}
+  .plan-prize-label{fill:#ffe600;}
+  .plan-board-label{fill:#22e0ff;}
   #plan-player{fill:#fff;stroke:#050505;stroke-width:1.2;}
   #plan-player-ring{fill:none;stroke:#fff;stroke-opacity:.5;stroke-width:1;}
   @media (prefers-reduced-motion: reduce){ .plan-cab.here .cab-body{animation:none;fill-opacity:.7;} }
@@ -2303,6 +2307,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     {id:'headphones', name:'HEADPHONES', cost:30}, {id:'bowtie', name:'BOW TIE', cost:16}
   ];
   let tickets = 0, ownedSkins = ['grey'], equippedSkin = 'grey';
+  let prizeScreenRedraw = null, hallRedraw = null; // set when the entrance hall is built (end of this section)
   let ownedCosmetics = ['none'], equippedCosmetic = 'none';
   let adminMode = false;
   try { tickets = parseInt(localStorage.getItem('neonArcade.tickets'), 10) || 0; } catch(e){}
@@ -2329,7 +2334,10 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   player.add(playerCosmeticGroup);
 
   const ticketDisplay = document.getElementById('ticket-display');
-  function refreshTicketDisplay(){ ticketDisplay.innerHTML = '&#127883; ' + (adminMode ? '&infin;' : tickets); }
+  function refreshTicketDisplay(){
+    ticketDisplay.innerHTML = '&#127883; ' + (adminMode ? '&infin;' : tickets);
+    if (prizeScreenRedraw) prizeScreenRedraw();   // the counter's little display mirrors the ticket count
+  }
   function addTickets(n){
     if (adminMode) { refreshTicketDisplay(); return; }
     tickets = Math.max(0, tickets + n);
@@ -2543,6 +2551,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     totalLaunches++;
     if (new Date().getHours() < 5) achFlags.night = true;
     saveLeaderboardData();
+    if (hallRedraw) hallRedraw();                 // the top-games board by the door updates live
     if (playedGames.indexOf(key) === -1) {
       playedGames.push(key);
       try { localStorage.setItem('neonArcade.playedGames', JSON.stringify(playedGames)); } catch(e){}
@@ -2642,10 +2651,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       });
     }
   }
-  settingsBtn.addEventListener('click', () => {
+  function openSettings(){
+    closeMenus();
     renderCustomizeMenu();
     settingsOverlay.style.display = 'flex';
-  });
+  }
+  settingsBtn.addEventListener('click', openSettings);
   document.getElementById('settings-close-btn').addEventListener('click', () => {
     settingsOverlay.style.display = 'none';
   });
@@ -2687,6 +2698,10 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     }
     svg += '<rect class="plan-door" x="100" y="247" width="28" height="4"/>';
     svg += '<text class="plan-label" x="114" y="262">ENTRANCE</text>';
+    svg += '<rect class="plan-prize" x="' + (planX(PRIZE_POS.x) - 18) + '" y="234" width="36" height="12" rx="2"/>' +
+           '<text class="plan-label plan-prize-label" x="' + planX(PRIZE_POS.x) + '" y="243">PRIZES</text>';
+    svg += '<rect class="plan-board" x="' + (planX(3.6) - 16) + '" y="236" width="32" height="8" rx="2"/>' +
+           '<text class="plan-label plan-board-label" x="' + planX(3.6) + '" y="243">SCORES</text>';
     cabinets.forEach((cab, i) => {
       const cx = planX(cab.group.position.x), cz = planZ(cab.group.position.z);
       const deg = -(cab.def.rotY || 0) * 180 / Math.PI; // SVG rotates clockwise, three.js counter-clockwise
@@ -3049,6 +3064,224 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
            adminOverlay.style.display === 'flex' || mapOverlay.style.display === 'flex';
   }
 
+  // =====================================================================
+  // Entrance hall — the wall behind where you spawn. Automatic glass doors
+  // onto a night street, a chase-light marquee, a welcome mat, a prize counter
+  // (opens the suits & accessories shop) and a live "top games" board.
+  // Everything is unlit/emissive, so it adds no lights to the scene.
+  // =====================================================================
+  const WALL_Z = 7.5;
+  const PRIZE_POS = new THREE.Vector3(-3.6, 0, 7.1);
+  const PRIZE_NEAR = 2.6;
+  const prizeGroup = new THREE.Group();
+  let nearPrize = false;
+  let entranceTick = null;
+
+  function openPrizeCounter(){ openSettings(); }
+
+  (function buildEntrance(){
+    const dark = new THREE.MeshStandardMaterial({ color: 0x120a20, roughness: 0.6, metalness: 0.4 });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xcfd8dc, roughness: 0.2, metalness: 0.9 });
+    const gold = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.15, metalness: 0.9, emissive: 0x3b2400, emissiveIntensity: 0.2 });
+
+    // ---- doorway: pillars, lintel and neon edging ----
+    [-1, 1].forEach(sd => {
+      const p = new THREE.Mesh(new THREE.BoxGeometry(0.28, 3.3, 0.4), dark);
+      p.position.set(sd * 1.44, 1.4, 7.3); scene.add(p);
+    });
+    const lintel = new THREE.Mesh(new THREE.BoxGeometry(3.16, 0.3, 0.4), dark);
+    lintel.position.set(0, 3.2, 7.3); scene.add(lintel);
+    addNeon(0.05, 3.0, 0.05, -1.28, 1.5, 7.08, 0x22e0ff, 1.0);
+    addNeon(0.05, 3.0, 0.05,  1.28, 1.5, 7.08, 0xff2bd6, 1.0);
+    addNeon(2.6, 0.05, 0.05, 0, 3.02, 7.08, 0xffe600, 1.0);
+
+    // ---- the night street seen through the doors ----
+    function drawStreet(g, w, h){
+      const horizon = h * 0.72;
+      const sky = g.createLinearGradient(0, 0, 0, horizon);
+      sky.addColorStop(0, '#070a24'); sky.addColorStop(1, '#3a1050');
+      g.fillStyle = sky; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 40; i++) { g.fillStyle = 'rgba(255,255,255,' + (0.3 + rnd(i) * 0.6) + ')'; g.fillRect(rnd(i * 2 + 100) * w, rnd(i * 2 + 101) * h * 0.4, 2, 2); }
+      g.fillStyle = '#f3ecd0'; g.beginPath(); g.arc(312, 84, 26, 0, 6.2832); g.fill();
+      g.fillStyle = '#d9cfae'; g.beginPath(); g.arc(320, 76, 6, 0, 6.2832); g.fill();
+      for (let i = 0; i < 9; i++) {
+        const bw = 40 + rnd(i) * 30, bh = 110 + rnd(i + 9) * 150, bx = i * 48 - 8, by = horizon - bh;
+        g.fillStyle = '#120a22'; g.fillRect(bx, by, bw, bh);
+        for (let wy = by + 12; wy < horizon - 14; wy += 18) for (let wx = bx + 6; wx < bx + bw - 8; wx += 14) {
+          g.fillStyle = rnd(wx * 3 + wy) > 0.55 ? '#ffd070' : '#1c1234'; g.fillRect(wx, wy, 6, 8);
+        }
+      }
+      g.fillStyle = '#0c0714'; g.fillRect(0, horizon, w, h - horizon);
+      g.fillStyle = '#1a1230'; g.fillRect(0, horizon, w, 6);
+      g.fillStyle = '#3a2f55'; for (let x = 10; x < w; x += 70) g.fillRect(x, h * 0.88, 36, 4);
+      [70, 350].forEach(lx => {
+        g.fillStyle = '#2a2440'; g.fillRect(lx - 3, horizon - 120, 6, 120);
+        const lg = g.createRadialGradient(lx, horizon - 124, 2, lx, horizon - 124, 70);
+        lg.addColorStop(0, 'rgba(255,220,150,0.9)'); lg.addColorStop(1, 'rgba(255,220,150,0)');
+        g.fillStyle = lg; g.fillRect(lx - 70, horizon - 194, 140, 140);
+      });
+      g.fillStyle = '#0c0714'; g.fillRect(150, horizon - 64, 116, 34);
+      g.fillStyle = '#ff2bd6'; g.font = "22px 'Press Start 2P', monospace"; g.textAlign = 'center'; g.fillText('OPEN', 208, horizon - 38);
+    }
+    const streetTex = makeCanvasTex(416, 480, drawStreet);
+    const outside = new THREE.Mesh(new THREE.PlaneGeometry(2.62, 3.05), new THREE.MeshBasicMaterial({ map: streetTex, fog: false }));
+    outside.position.set(0, 1.5, 7.47); outside.rotation.y = Math.PI; scene.add(outside);
+
+    // ---- sliding glass leaves (they part when you walk up) ----
+    const glassMat = new THREE.MeshBasicMaterial({ color: 0x7fe8ff, transparent: true, opacity: 0.14, depthWrite: false, side: THREE.DoubleSide });
+    const leaves = [-1, 1].map(sd => {
+      const g = new THREE.Group(); g.position.set(sd * 0.65, 1.5, 7.4); scene.add(g);
+      g.add(new THREE.Mesh(new THREE.PlaneGeometry(1.24, 3.0), glassMat));
+      const railGeo = new THREE.BoxGeometry(1.24, 0.06, 0.05);
+      [-1.47, 1.47].forEach(y => { const r = new THREE.Mesh(railGeo, chrome); r.position.set(0, y, 0); g.add(r); });
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.9, 0.05), chrome); bar.position.set(-sd * 0.5, 0, -0.06); g.add(bar);
+      return g;
+    });
+
+    // light from the street spilling across the floor (brighter while the doors are open)
+    const spill = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 3.0),
+      new THREE.MeshBasicMaterial({ map: CAB_TEX.glow, color: 0xa8c8ff, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false }));
+    spill.rotation.x = -Math.PI / 2; spill.position.set(0, 0.006, 6.2); scene.add(spill);
+
+    // ---- marquee bulbs chasing round the frame ----
+    const bulbGeo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
+    const bulbOn = new THREE.MeshBasicMaterial({ color: 0xfff2b0 }), bulbOff = new THREE.MeshBasicMaterial({ color: 0x4a3f1a });
+    const bulbs = [];
+    const addBulb = (x, y) => { const b = new THREE.Mesh(bulbGeo, bulbOff); b.position.set(x, y, 7.09); scene.add(b); bulbs.push(b); };
+    const stepX = isMobile ? 0.5 : 0.25;
+    for (let x = -1.5; x <= 1.5001; x += stepX) addBulb(x, 3.2);
+    [2.8, 2.2, 1.6, 1.0, 0.4].forEach((y, i) => { if (!isMobile || i % 2 === 0) { addBulb(-1.44, y); addBulb(1.44, y); } });
+
+    // ---- neon WELCOME sign over the door ----
+    const welcomeTex = makeCanvasTex(768, 200, (g, w, h) => {
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = "88px 'Press Start 2P', monospace"; g.shadowColor = '#22e0ff'; g.shadowBlur = 34; g.fillStyle = '#d8fbff';
+      g.fillText('WELCOME', w / 2, 86); g.shadowBlur = 18; g.fillText('WELCOME', w / 2, 86);
+      g.font = "26px 'Press Start 2P', monospace"; g.shadowColor = '#ff2bd6'; g.shadowBlur = 20; g.fillStyle = '#ffb8f0';
+      g.fillText('INSERT COIN TO BEGIN', w / 2, 160);
+    });
+    const welcomeSignMat = new THREE.MeshBasicMaterial({ map: welcomeTex, transparent: true, opacity: 0.18, depthWrite: false });
+    const welcomeSign = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 0.886), welcomeSignMat);
+    welcomeSign.position.set(0, 4.0, 7.44); welcomeSign.rotation.y = Math.PI; scene.add(welcomeSign);
+
+    // ---- welcome mat (reads correctly for someone walking IN) ----
+    const matTex = makeCanvasTex(256, 110, (g, w, h) => {
+      g.fillStyle = '#141020'; g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#3a2860'; g.lineWidth = 6; g.strokeRect(5, 5, w - 10, h - 10);
+      g.strokeStyle = '#ffd700'; g.lineWidth = 2; g.strokeRect(14, 14, w - 28, h - 28);
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffd700'; g.font = "26px 'Press Start 2P', monospace";
+      g.fillText('WELCOME', w / 2, h / 2 + 2);
+    });
+    const doormat = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.03), new THREE.MeshBasicMaterial({ map: matTex }));
+    doormat.rotation.x = -Math.PI / 2; doormat.position.set(0, 0.004, 6.85); scene.add(doormat);
+
+    // ---- prize counter (left of the door) ----
+    prizeGroup.position.set(PRIZE_POS.x, 0, PRIZE_POS.z);
+    prizeGroup.rotation.y = Math.PI;     // its front faces into the room
+    scene.add(prizeGroup);
+    const P = o => { prizeGroup.add(o); return o; };
+    P(new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.0, 0.8), dark)).position.set(0, 0.5, 0);
+    P(new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.06, 0.9), gold)).position.set(0, 1.03, 0.02);
+    addNeon(2.2, 0.04, 0.04, PRIZE_POS.x, 0.9, PRIZE_POS.z - 0.42, 0xffe600, 1.0);
+    const caseMat = new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide });
+    P(new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.4, 0.7), caseMat)).position.set(0, 1.26, 0);
+    [-0.7, 0, 0.7].forEach(x => {
+      P(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.12), dark)).position.set(x, 1.075, 0.05);
+      P(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.1, 8), gold)).position.set(x, 1.13, 0.05);
+      P(new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.035, 0.1, 10), gold)).position.set(x, 1.23, 0.05);
+    });
+    [[-0.35, 0xff2bd6], [0.36, 0x22e0ff]].forEach(b => {
+      P(new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.14), new THREE.MeshStandardMaterial({ color: b[1], roughness: 0.5 }))).position.set(b[0], 1.12, -0.05);
+      P(new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.02, 0.03), gold)).position.set(b[0], 1.185, -0.05);
+    });
+    [1.75, 2.35].forEach((sy, si) => {
+      P(new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.04, 0.3), dark)).position.set(0, sy, -0.25);
+      const cols = si ? [0xff2bd6, 0x22e0ff, 0xffe600, 0x39ff14] : [0xb060e0, 0xff8020, 0x22e0ff, 0xff2bd6];
+      const n = isMobile ? 2 : 4;
+      for (let k = 0; k < n; k++) {
+        const x = isMobile ? -0.4 + k * 0.8 : -0.85 + k * 0.57;
+        const pm = new THREE.MeshStandardMaterial({ color: cols[k], roughness: 0.9 });
+        P(new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), pm)).position.set(x, sy + 0.13, -0.25);
+        [-1, 1].forEach(sd => P(new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), pm)).position.set(x + sd * 0.08, sy + 0.23, -0.25));
+      }
+    });
+    const prizeTex = makeCanvasTex(512, 160, (g, w, h) => {
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = "72px 'Press Start 2P', monospace"; g.shadowColor = '#ffe600'; g.shadowBlur = 30; g.fillStyle = '#fff4b0';
+      g.fillText('PRIZES', w / 2, 66); g.shadowBlur = 0;
+      g.font = "20px 'Press Start 2P', monospace"; g.fillStyle = '#22e0ff'; g.fillText('SPEND YOUR TICKETS', w / 2, 132);
+    });
+    const prizeSignMat = new THREE.MeshBasicMaterial({ map: prizeTex, transparent: true, opacity: 0.18, depthWrite: false });
+    P(new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.75), prizeSignMat)).position.set(0, 3.05, -0.36);
+    const tixTex = makeCanvasTex(256, 96, (g, w, h) => {
+      g.fillStyle = '#020402'; g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#ffe600'; g.lineWidth = 3; g.strokeRect(2, 2, w - 4, h - 4);
+      g.textAlign = 'center'; g.fillStyle = '#ffe600';
+      g.font = "14px 'Press Start 2P', monospace"; g.fillText('TICKETS', w / 2, 34);
+      g.font = "28px 'Press Start 2P', monospace"; g.fillText(adminMode ? 'INF' : String(tickets), w / 2, 74);
+    });
+    prizeScreenRedraw = staticRedraws[staticRedraws.length - 1];
+    P(new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.34), new THREE.MeshBasicMaterial({ map: tixTex }))).position.set(0.6, 0.62, 0.402);
+    const prizeGlow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.6),
+      new THREE.MeshBasicMaterial({ map: CAB_TEX.glow, color: 0xffd070, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false }));
+    prizeGlow.rotation.x = -Math.PI / 2; prizeGlow.position.set(PRIZE_POS.x, 0.005, 6.35); scene.add(prizeGlow);
+
+    // ---- "top games" board (right of the door): your most-played games, live ----
+    const HALL_X = 3.6;
+    const hallTex = makeCanvasTex(512, 384, (g, w, h) => {
+      g.fillStyle = '#020402'; g.fillRect(0, 0, w, h);
+      g.textAlign = 'center'; g.fillStyle = '#ffe600'; g.shadowColor = '#ffe600'; g.shadowBlur = 12;
+      g.font = "30px 'Press Start 2P', monospace"; g.fillText('TOP GAMES', w / 2, 56); g.shadowBlur = 0;
+      g.font = "11px 'Press Start 2P', monospace"; g.fillStyle = '#8a7fb0'; g.fillText('YOUR PERSONAL LEADERBOARD', w / 2, 82);
+      const top = Object.entries(gameStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      if (!top.length) {
+        g.fillStyle = '#39ff14'; g.font = "16px 'Press Start 2P', monospace";
+        g.fillText('PLAY A GAME', w / 2, 190); g.fillText('TO START YOUR LIST', w / 2, 224);
+      } else {
+        top.forEach((e, i) => {
+          const y = 134 + i * 44;
+          g.font = "16px 'Press Start 2P', monospace";
+          g.textAlign = 'left'; g.fillStyle = i === 0 ? '#ffe600' : '#eae6ff';
+          g.fillText((i + 1) + '. ' + gameLabel(e[0]).toUpperCase().slice(0, 18), 36, y);
+          g.textAlign = 'right'; g.fillStyle = '#39ff14'; g.fillText(e[1] + 'X', w - 36, y);
+        });
+      }
+      const mins = Math.floor((totalPlaySeconds + (playStartedAt ? (Date.now() - playStartedAt) / 1000 : 0)) / 60);
+      g.textAlign = 'center'; g.fillStyle = '#8a7fb0'; g.font = "12px 'Press Start 2P', monospace"; g.fillText('ARCADE TIME ' + mins + 'M', w / 2, h - 24);
+      g.fillStyle = 'rgba(0,0,0,0.22)'; for (let y = 0; y < h; y += 4) g.fillRect(0, y, w, 1);
+    });
+    hallRedraw = staticRedraws[staticRedraws.length - 1];
+    const hallFrame = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.7, 0.1), dark);
+    hallFrame.position.set(HALL_X, 1.95, 7.44); scene.add(hallFrame);
+    const hallScreen = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 1.5), new THREE.MeshBasicMaterial({ map: hallTex }));
+    hallScreen.position.set(HALL_X, 1.95, 7.385); hallScreen.rotation.y = Math.PI; scene.add(hallScreen);
+    addNeon(2.2, 0.04, 0.04, HALL_X, 2.82, 7.36, 0xffe600, 1.0);
+    addNeon(2.2, 0.04, 0.04, HALL_X, 1.08, 7.36, 0xffe600, 1.0);
+    addNeon(0.04, 1.7, 0.04, HALL_X - 1.1, 1.95, 7.36, 0xffe600, 1.0);
+    addNeon(0.04, 1.7, 0.04, HALL_X + 1.1, 1.95, 7.36, 0xffe600, 1.0);
+
+    // ---- per-frame: automatic doors, chase lights, signs power up with the arcade ----
+    let open = 0, wasOpen = false, lastStep = -1;
+    entranceTick = (now, dt) => {
+      const d = Math.hypot(player.position.x, player.position.z - WALL_Z);
+      const want = (phase === PHASE_ROOM && d < 3.6) ? 1 : 0;
+      if (want && !wasOpen) AudioEngine.whoosh();
+      wasOpen = !!want;
+      open += (want - open) * Math.min(1, dt * (reduceMotion ? 20 : 3.2));
+      const off = 0.65 + 0.62 * open;
+      leaves[0].position.x = -off; leaves[1].position.x = off;
+      spill.material.opacity = 0.16 + 0.32 * open;
+      const step = Math.floor(now / 220) % 3;
+      if (step !== lastStep) {
+        lastStep = step;
+        for (let i = 0; i < bulbs.length; i++) bulbs[i].material = ((i + step) % 3 === 0) ? bulbOn : bulbOff;
+      }
+      const lit = arcadePowered ? 1 : 0.18;
+      welcomeSignMat.opacity = lit; prizeSignMat.opacity = lit;
+      prizeGlow.material.opacity = arcadePowered ? 0.22 + (nearPrize ? 0.15 : 0) + 0.05 * Math.sin(now * 0.004) : 0.08;
+    };
+  })();
+
   function tryJump(){
     if (Math.abs(player.position.y-FLOOR_Y)<0.03) { jumpVelocity=JUMP_SPEED; AudioEngine.jump(); }
   }
@@ -3230,19 +3463,28 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     if (phase !== PHASE_ROOM) {
       roomPrompt.style.display = 'none';
       floorGuide.style.display = 'none';
+      nearPrize = false;
       return;
     }
     const found = findNearestCabinet();
-    if (found !== nearCab) {
+    // the prize counter only counts when no cabinet is in range (they're far apart anyway)
+    const prizeNow = !found && Math.hypot(player.position.x - PRIZE_POS.x, player.position.z - PRIZE_POS.z) < PRIZE_NEAR;
+    if (found !== nearCab || prizeNow !== nearPrize) {
       nearCab = found;
+      nearPrize = prizeNow;
       if (nearCab) {
         roomPrompt.style.color = hexStr(nearCab.accent);
         roomPrompt.style.textShadow = '0 0 8px ' + hexStr(nearCab.accent);
         roomPrompt.style.borderColor = mixHex(nearCab.accent, 0.55);
         roomPrompt.innerHTML = 'PLAY THE ' + nearCab.title + ' CABINET<br><span>' + (isMobile ? 'tap it' : 'click it or press E / ENTER') + ' &bull; ' + nearCab.games.length + ' games</span>';
+      } else if (nearPrize) {
+        roomPrompt.style.color = '#ffe600';
+        roomPrompt.style.textShadow = '0 0 8px #ffe600';
+        roomPrompt.style.borderColor = mixHex(0xffe600, 0.55);
+        roomPrompt.innerHTML = 'PRIZE COUNTER<br><span>' + (isMobile ? 'tap it' : 'click it or press E / ENTER') + ' &bull; spend your tickets</span>';
       }
     }
-    if (nearCab) {
+    if (nearCab || nearPrize) {
       powerOnArcade();
       roomPrompt.style.display = 'block';
       floorGuide.style.display = 'none';
@@ -3518,6 +3760,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     } else if (phase === PHASE_ROOM && nearCab) {
       const hit = raycaster.intersectObject(nearCab.group, true)[0];
       if (hit) cursor = 'pointer';
+    } else if (phase === PHASE_ROOM && nearPrize) {
+      const hit = raycaster.intersectObject(prizeGroup, true)[0];
+      if (hit) cursor = 'pointer';
     }
 
     // camera-zoom-on-wheel is only ever appropriate in room mode; in arcade
@@ -3671,6 +3916,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       // clicking any part of a nearby cabinet sits you down at THAT machine
       const hit = raycaster.intersectObjects(cabinetGroups, true)[0];
       if (hit && hit.object.userData.cabRef === nearCab) travelToCabinet(nearCab);
+    } else if (phase === PHASE_ROOM && nearPrize) {
+      setPointerFromEvent(e.clientX, e.clientY);
+      if (raycaster.intersectObject(prizeGroup, true)[0]) openPrizeCounter();
     }
   });
   renderer.domElement.addEventListener('pointercancel', e => { releaseJoystick(e); dragStartPos = null; });
@@ -3729,6 +3977,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       }
       if ((k === 'Enter' || lower === 'e') && nearCab) {
         travelToCabinet(nearCab);
+        e.preventDefault();
+      } else if ((k === 'Enter' || lower === 'e') && nearPrize) {
+        openPrizeCounter();
         e.preventDefault();
       }
       return;
@@ -4100,6 +4351,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 
     updatePlayer(dt);
     controls.update();
+    // orbiting can otherwise swing the camera out through a wall, into the void
+    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -6.2, 6.2);
+    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -7.2, 7.2);
     updateMobileControlsVisibility();
 
     const pulse = Math.sin(now * 0.004) * 0.2;
@@ -4130,6 +4384,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       c.marqueeMat.color.setScalar(f);
       if (c.tick) c.tick(now);   // genre extras: spinning wheel, dice, portal rings, dripping blood...
     });
+
+    if (entranceTick) entranceTick(now, dt);   // automatic doors, chase lights, entrance signs
 
     // back-wall neon sign: dark until the arcade powers on, then flickers now and then
     if (!reduceMotion && now > signNextFlicker) {
@@ -4492,4 +4748,4 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 })();
 </script>
 </body>
-</html>
+  </html>
