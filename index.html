@@ -1588,6 +1588,362 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     }),
   };
 
+  // =====================================================================
+  // Genre art: side panels + a few 3D extras that make each machine its own
+  // =====================================================================
+  function rnd(i){ const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); } // deterministic 0..1
+
+  // side-panel artwork, one per genre (128x208 canvas -> 0.8 x 1.3 m decal on each flank)
+  const SIDE_DRAW = {
+    racing(g, w, h, c){
+      for (let y = 0; y < h; y += 16) for (let k = 0; k < 2; k++) { g.fillStyle = ((y / 16 + k) % 2) ? '#f1efe8' : '#111'; g.fillRect(6 + k * 16, y, 16, 16); }
+      g.strokeStyle = c; g.lineWidth = 4;
+      for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(56, 44 + i * 34); g.lineTo(122, 24 + i * 34); g.stroke(); }
+      g.fillStyle = c; g.font = "44px 'Press Start 2P', monospace"; g.textAlign = 'center'; g.fillText('7', 84, h - 22);
+    },
+    horror(g, w, h, c){
+      g.fillStyle = '#2a0a10'; g.beginPath(); g.arc(86, 62, 22, 0, 6.2832); g.fill();
+      g.strokeStyle = '#3a0f18'; g.lineWidth = 3; g.beginPath();
+      g.moveTo(10, 90); g.lineTo(40, 120); g.lineTo(30, 150); g.lineTo(60, 176); g.moveTo(w - 10, 100); g.lineTo(w - 40, 130); g.lineTo(w - 26, 160); g.stroke();
+      for (let i = 0; i < 6; i++) { const dh = 14 + rnd(i) * 56; g.fillStyle = '#8a1020'; g.fillRect(10 + i * 20, 4, 6, dh); g.beginPath(); g.arc(13 + i * 20, 4 + dh, 5, 0, 6.2832); g.fill(); }
+    },
+    sandbox(g, w, h, c){
+      g.fillStyle = '#ffe600'; g.fillRect(80, 24, 22, 22);
+      for (let y = 96; y < h - 4; y += 16) for (let x = 4; x < w - 4; x += 16) {
+        g.fillStyle = y === 96 ? '#639922' : (rnd(x * 3 + y) > 0.72 ? '#5f5e5a' : '#8a5a2b');
+        g.fillRect(x, y, 15, 15);
+      }
+    },
+    arcade(g, w, h, c){
+      g.strokeStyle = c; g.globalAlpha = 0.6; g.lineWidth = 7;
+      for (let i = 0; i < 10; i++) { g.beginPath(); g.moveTo(i * 28 - h, h); g.lineTo(i * 28, 0); g.stroke(); }
+      g.globalAlpha = 1;
+    },
+    action(g, w, h, c){
+      [[0, 24], [h - 24, 24]].forEach(b => {
+        g.save(); g.beginPath(); g.rect(0, b[0], w, b[1]); g.clip();
+        for (let x = -30; x < w + 30; x += 24) {
+          g.fillStyle = ((x + 30) / 24) % 2 ? '#111' : '#ffcc00';
+          g.beginPath(); g.moveTo(x, b[0] + b[1]); g.lineTo(x + 12, b[0]); g.lineTo(x + 24, b[0]); g.lineTo(x + 12, b[0] + b[1]); g.fill();
+        }
+        g.restore();
+      });
+      for (let i = 0; i < 6; i++) { const px = 20 + rnd(i * 2) * 88, py = 50 + rnd(i * 2 + 1) * 110; g.fillStyle = '#02010a'; g.beginPath(); g.arc(px, py, 5, 0, 6.2832); g.fill(); g.strokeStyle = c; g.lineWidth = 2; g.beginPath(); g.arc(px, py, 8, 0, 6.2832); g.stroke(); }
+    },
+    adventure(g, w, h, c){
+      g.strokeStyle = '#3b6d11'; g.lineWidth = 5; g.beginPath();
+      for (let y = 0; y <= h; y += 4) { const x = w / 2 + Math.sin(y * 0.05) * 26; if (y === 0) g.moveTo(x, y); else g.lineTo(x, y); }
+      g.stroke();
+      for (let y = 14; y < h; y += 22) { const x = w / 2 + Math.sin(y * 0.05) * 26 + ((y / 22) % 2 ? 12 : -12); g.fillStyle = '#639922'; g.beginPath(); g.arc(x, y, 7, 0, 6.2832); g.fill(); }
+      g.fillStyle = c; g.beginPath(); g.moveTo(w / 2, h - 46); g.lineTo(w / 2 + 14, h - 30); g.lineTo(w / 2, h - 14); g.lineTo(w / 2 - 14, h - 30); g.fill();
+    },
+    toybox(g, w, h, c){
+      const cols = ['#ff2bd6', '#22e0ff', '#ffe600', '#39ff14', '#b060e0'];
+      for (let i = 0; i < 44; i++) { g.fillStyle = cols[i % 5]; g.fillRect(8 + rnd(i * 3) * 108, 8 + rnd(i * 3 + 1) * 190, 8, 4); }
+      g.fillStyle = '#f1efe8'; g.fillRect(44, 150, 40, 40);
+      [[54, 160], [74, 180], [64, 170]].forEach(p => { g.fillStyle = '#111'; g.beginPath(); g.arc(p[0], p[1], 4, 0, 6.2832); g.fill(); });
+    },
+    portals(g, w, h, c){
+      g.strokeStyle = c; g.lineWidth = 4; g.setLineDash([14, 10]);
+      for (let r = 16; r <= 66; r += 16) { g.beginPath(); g.arc(w / 2, h / 2, r, 0, 6.2832); g.stroke(); }
+      g.setLineDash([]); g.fillStyle = '#eafff8'; g.beginPath(); g.arc(w / 2, h / 2, 6, 0, 6.2832); g.fill();
+    },
+    creative(g, w, h, c){
+      const cols = ['#d4537e', '#378ADD', '#639922', '#EF9F27', '#7F77DD'];
+      for (let i = 0; i < 16; i++) { g.fillStyle = cols[i % 5]; g.beginPath(); g.arc(12 + rnd(i * 5) * 104, 14 + rnd(i * 5 + 1) * 180, 4 + rnd(i * 5 + 2) * 12, 0, 6.2832); g.fill(); }
+      g.strokeStyle = c; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(14, 180); g.quadraticCurveTo(64, 90, 114, 150); g.stroke();
+    },
+  };
+  function makeSideTexture(id, accent){
+    const css = hexStr(accent), fn = SIDE_DRAW[id] || SIDE_DRAW.arcade;
+    return makeCanvasTex(128, 208, (g, w, h) => {
+      g.fillStyle = id === 'horror' ? '#070204' : '#0d0718'; g.fillRect(0, 0, w, h);
+      fn(g, w, h, css);
+      g.strokeStyle = css; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, h - 4);
+    });
+  }
+  function makeDieTexture(bg){
+    return makeCanvasTex(64, 64, (g, w, h) => {
+      g.fillStyle = bg; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#f1efe8';
+      [[16, 16], [48, 16], [32, 32], [16, 48], [48, 48]].forEach(p => { g.beginPath(); g.arc(p[0], p[1], 6, 0, 6.2832); g.fill(); });
+    });
+  }
+  const hazardTexture = makeCanvasTex(64, 16, (g, w, h) => {
+    g.fillStyle = '#111'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#ffcc00';
+    for (let x = -16; x < w + 16; x += 16) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 8, 0); g.lineTo(x + 16, 0); g.lineTo(x + 8, h); g.fill(); }
+  });
+  hazardTexture.wrapS = THREE.RepeatWrapping;
+  hazardTexture.repeat.set(10, 1);
+
+  // Adds side art plus this genre's own 3D bits to a freshly built machine.
+  // Everything is emissive/unlit or cheap standard material — no extra lights —
+  // and anything not essential is skipped on phones.
+  function decorateCabinet(cab, group, controlGroup){
+    const id = cab.id, accent = cab.accent;
+    const mat = (color, emissive, ei, metal, rough) => new THREE.MeshStandardMaterial({
+      color, emissive: emissive || 0x000000, emissiveIntensity: ei || 0,
+      metalness: metal == null ? 0.2 : metal, roughness: rough == null ? 0.6 : rough });
+    const ticks = [];
+
+    const sideMat = new THREE.MeshBasicMaterial({ map: makeSideTexture(id, accent), color: 0xbbbbbb });
+    [-1, 1].forEach(sd => {
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.3), sideMat);
+      p.position.set(sd * 0.684, 1.05, 0);
+      p.rotation.y = sd * Math.PI / 2;
+      group.add(p);
+    });
+
+    if (id === 'racing') {
+      // steering wheel mounted on the panel, wobbling gently
+      const wheel = new THREE.Group();
+      wheel.position.set(0.54, 0.09, 0.02); wheel.rotation.x = -0.8;
+      controlGroup.add(wheel);
+      wheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.011, 6, 18), mat(0x111111, 0, 0, 0.4, 0.5)));
+      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.012, 0.012), mat(accent, accent, 0.5));
+      wheel.add(spoke);
+      const spoke2 = spoke.clone(); spoke2.rotation.z = Math.PI / 2; wheel.add(spoke2);
+      ticks.push(now => { wheel.rotation.z = reduceMotion ? 0 : Math.sin(now * 0.0013 + cab.phaseOff) * 0.55; });
+      if (!isMobile) {
+        const pedalMat = mat(0x2c2c2a, 0, 0, 0.5, 0.5);
+        [-0.13, 0.13].forEach(px => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.17), pedalMat); p.position.set(px, 0.02, 0.72); p.rotation.x = -0.25; group.add(p); });
+      }
+    } else if (id === 'horror') {
+      // blood drips creeping down the top of the screen
+      const dripMat = mat(0x7a0f18, 0x40060a, 0.6, 0.2, 0.4);
+      const dg = new THREE.BoxGeometry(0.022, 0.12, 0.02); dg.translate(0, -0.06, 0);
+      const drips = [-0.46, -0.12, 0.28, 0.5].map((dx, i) => {
+        const d = new THREE.Mesh(dg, dripMat); d.position.set(dx, 1.885, 0.487); group.add(d); return d;
+      });
+      ticks.push(now => { drips.forEach((d, i) => { d.scale.y = reduceMotion ? 1 : 0.9 + 0.3 * Math.sin(now * 0.0011 + i * 1.7); }); });
+    } else if (id === 'sandbox') {
+      // a little stack of grass blocks on top
+      const cubeGeo = new THREE.BoxGeometry(0.13, 0.13, 0.13);
+      const grass = mat(0x639922, 0, 0, 0.1, 0.8), dirt = mat(0x8a5a2b, 0, 0, 0.1, 0.9);
+      const faces = [dirt, dirt, grass, dirt, dirt, dirt];
+      const cubes = [[-0.5, 2.23, 0.2], [-0.36, 2.23, -0.1], [-0.43, 2.36, 0.4], [0.52, 2.23, 0.1]].map(p => {
+        const m = new THREE.Mesh(cubeGeo, faces); m.position.set(p[0], p[1], 0); m.rotation.y = p[2]; group.add(m); return m;
+      });
+      ticks.push(now => { if (!reduceMotion) cubes[2].rotation.y = now * 0.0005; });
+    } else if (id === 'arcade') {
+      // blinking "game over" lamp on top of the marquee
+      const lampMat = new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.9 });
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.1), lampMat);
+      lamp.position.set(0, 2.2, 0.02); group.add(lamp);
+      ticks.push(now => { lampMat.opacity = reduceMotion ? 0.9 : (Math.floor(now / 450) % 2 ? 0.95 : 0.3); });
+    } else if (id === 'action') {
+      // light gun lying on the panel, plus a hazard-striped kick plate
+      const gun = new THREE.Group(); gun.position.set(0.54, 0.05, 0.0); gun.rotation.y = 0.3; controlGroup.add(gun);
+      const dark = mat(0x1a1a1a, 0, 0, 0.5, 0.4);
+      const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.22), dark); barrel.position.set(0, 0.03, 0); gun.add(barrel);
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.052, 0.03), mat(accent, accent, 0.8)); tip.position.set(0, 0.03, 0.115); gun.add(tip);
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.09, 0.05), dark); grip.position.set(0, -0.01, -0.07); grip.rotation.x = 0.3; gun.add(grip);
+      const band = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.1), new THREE.MeshBasicMaterial({ map: hazardTexture }));
+      band.position.set(0, 0.15, 0.527); group.add(band);
+    } else if (id === 'adventure') {
+      // vines hanging down both front edges, swaying
+      const leafMat = mat(0x3b6d11, 0x0a2004, 0.3, 0.1, 0.8);
+      const leafGeo = new THREE.SphereGeometry(0.035, 6, 5);
+      const n = isMobile ? 4 : 8;
+      const vines = [-1, 1].map(sd => {
+        const vg = new THREE.Group(); vg.position.set(sd * 0.64, 1.76, 0.478); group.add(vg);
+        for (let k = 0; k < n; k++) { const m = new THREE.Mesh(leafGeo, leafMat); m.position.set(0.02 * Math.sin(k * 1.7) * sd, -k * 0.085, 0); m.scale.set(1, 1.3, 0.7); vg.add(m); }
+        return vg;
+      });
+      ticks.push(now => { vines.forEach((v, i) => { v.rotation.z = reduceMotion ? 0 : Math.sin(now * 0.0011 + i * 2) * 0.03; }); });
+    } else if (id === 'toybox') {
+      // three dice tumbling slowly on top
+      const dieGeo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+      const dice = [['#ff2bd6', -0.46], ['#22e0ff', -0.28], ['#ffb020', 0.5]].map((d, i) => {
+        const m = new THREE.Mesh(dieGeo, new THREE.MeshStandardMaterial({ map: makeDieTexture(d[0]), roughness: 0.5, metalness: 0.1 }));
+        m.position.set(d[1], 2.235, i === 1 ? 0.04 : 0); group.add(m); return m;
+      });
+      ticks.push(now => { dice.forEach((m, i) => { m.rotation.y = reduceMotion ? i : now * 0.0006 + i * 2; }); });
+    } else if (id === 'portals') {
+      // three gyroscope rings spinning above the marquee
+      const ringMat = new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.9 });
+      const r1 = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.018, 8, 28), ringMat);
+      const r2 = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.014, 8, 24), ringMat);
+      const r3 = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.012, 6, 18), ringMat);
+      [r1, r2, r3].forEach(r => { r.position.set(0, 2.62, 0.02); group.add(r); });
+      ticks.push(now => {
+        if (reduceMotion) { r1.rotation.x = 1; r2.rotation.y = 1; r3.rotation.x = 0.5; return; }
+        r1.rotation.x = now * 0.0009; r2.rotation.y = now * 0.0013; r3.rotation.x = -now * 0.0018; r3.rotation.y = now * 0.001;
+      });
+    } else if (id === 'creative') {
+      // paint palette and brush on top
+      const pal = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.02, 16), mat(0xd8c9a8, 0, 0, 0.1, 0.7));
+      pal.position.set(-0.45, 2.19, 0.04); pal.rotation.x = 0.25; group.add(pal);
+      ['#d4537e', '#378ADD', '#639922', '#EF9F27', '#7F77DD'].forEach((c, i) => {
+        const a = i * 1.15, b = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.026, 8), mat(parseInt(c.slice(1), 16), 0, 0, 0.1, 0.5));
+        b.position.set(Math.cos(a) * 0.1, 0.02, Math.sin(a) * 0.1); pal.add(b);
+      });
+      const brush = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, 0.3, 6), mat(0x6b3f1d, 0, 0, 0.1, 0.7));
+      brush.position.set(0.5, 2.3, 0.05); brush.rotation.z = 0.5; group.add(brush);
+      const bTip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.004, 0.06, 6), mat(accent, accent, 0.6));
+      bTip.position.set(0, -0.18, 0); brush.add(bTip);
+    }
+
+    if (ticks.length) cab.tick = now => { for (let i = 0; i < ticks.length; i++) ticks[i](now); };
+  }
+
+  // =====================================================================
+  // Attract mode: idle machines play a short looping scene on their CRT.
+  // Only the nearest few animate (see animate()); the rest keep their last frame.
+  // =====================================================================
+  function aR(s, x, y, w, h, c){ s.fillStyle = c; s.fillRect(x, y, w, h); }
+  function aC(s, x, y, r, c){ s.fillStyle = c; s.beginPath(); s.arc(x, y, r, 0, 6.2832); s.fill(); }
+  function aT(s, str, x, y, size, c, al){ s.font = size + "px 'Press Start 2P', monospace"; s.fillStyle = c; s.textAlign = al || 'left'; s.fillText(str, x, y); }
+  const aBlink = t => Math.floor(t * 2) % 2 === 0;
+
+  const SANDBOX_COL = { g:'#639922', d:'#8a5a2b', w:'#a0693a', r:'#a32d2d', l:'#3b6d11', k:'#6b3f1d', s:'#5f5e5a' };
+  const SANDBOX_CELLS = [];
+  for (let c = 0; c < 16; c++) SANDBOX_CELLS.push([c, 9, 'g']);
+  for (let c = 0; c < 16; c++) SANDBOX_CELLS.push([c, 10, 'd']);
+  for (let r = 6; r <= 8; r++) for (let c = 3; c <= 6; c++) SANDBOX_CELLS.push([c, r, 'w']);
+  for (let c = 2; c <= 7; c++) SANDBOX_CELLS.push([c, 5, 'r']);
+  SANDBOX_CELLS.push([4, 7, 's'], [11, 7, 'k'], [11, 8, 'k']);
+  for (let r = 5; r <= 6; r++) for (let c = 10; c <= 12; c++) SANDBOX_CELLS.push([c, r, 'l']);
+
+  const ATTRACT = {
+    racing(s, t){
+      aR(s, 0, 0, 512, 150, '#150b28'); aR(s, 0, 150, 512, 234, '#0b0716');
+      s.fillStyle = '#231540';
+      s.beginPath(); s.moveTo(0, 150); s.lineTo(110, 92); s.lineTo(220, 150); s.fill();
+      s.beginPath(); s.moveTo(320, 150); s.lineTo(420, 84); s.lineTo(512, 150); s.fill();
+      s.fillStyle = '#2a1f45'; s.beginPath(); s.moveTo(236, 150); s.lineTo(276, 150); s.lineTo(496, 384); s.lineTo(16, 384); s.closePath(); s.fill();
+      for (let i = 0; i < 8; i++) {
+        const p = (i + (t * 1.6) % 1) / 8, y = 150 + p * p * 228, h = 3 + p * p * 30, w = 2 + p * p * 12, hw = 22 + p * p * 226, col = i % 2 ? '#ff2bd6' : '#f1efe8';
+        aR(s, 256 - w / 2, y, w, h, '#ffd3f6'); aR(s, 256 - hw - 3, y, 4 + p * 6, h, col); aR(s, 256 + hw - 1, y, 4 + p * 6, h, col);
+      }
+      const cx = 256 + Math.sin(t * 1.3) * 70;
+      aR(s, cx - 22, 296, 44, 18, '#ff2bd6'); aR(s, cx - 14, 286, 28, 11, '#ffd3f6'); aR(s, cx - 27, 308, 10, 10, '#111'); aR(s, cx + 17, 308, 10, 10, '#111');
+      aT(s, 'LAP 1/3', 18, 34, 12, '#ffd3f6'); aT(s, '1ST', 494, 34, 12, '#ffd3f6', 'right');
+      if (aBlink(t)) aT(s, 'PRESS START', 256, 96, 14, '#ff2bd6', 'center');
+    },
+    horror(s, t){
+      const fl = Math.sin(t * 23) + Math.sin(t * 7.3) > 1.5;
+      aR(s, 0, 0, 512, 384, fl ? '#1c0609' : '#050203');
+      aR(s, 190, 112, 132, 230, '#0d0608'); s.strokeStyle = fl ? '#7a1a26' : '#3a1018'; s.lineWidth = 3; s.strokeRect(190, 112, 132, 230);
+      aR(s, 314, 114, 6, 226, fl ? '#ff3b3b' : '#7a1018');
+      const ph = t % 5;
+      if (ph > 3 && ph < 4.4 && Math.floor(t * 6) % 5 !== 0) { aR(s, 222, 204, 12, 8, '#ff1744'); aR(s, 244, 204, 12, 8, '#ff1744'); }
+      const o = fl ? 3 : 0;
+      aT(s, 'LIGHTS OUT', 256 + o, 70, 22, '#ff1744', 'center');
+      if (fl) aT(s, 'LIGHTS OUT', 256 - o, 72, 22, '#22e0ff', 'center');
+      if (fl) for (let i = 0; i < 30; i++) { s.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.4) + ')'; s.fillRect(Math.random() * 512, Math.random() * 384, 10 + Math.random() * 70, 1 + Math.random() * 3); }
+    },
+    action(s, t){
+      aR(s, 0, 0, 512, 384, '#1a0b12'); aC(s, 400, 100, 44, '#5a1a10');
+      const layer = (speed, y0, w, col, seed) => {
+        const span = 10 * w;
+        for (let i = 0; i < 10; i++) { const x = (((i * w - t * speed) % span) + span) % span - w; const hh = 40 + 60 * rnd(i + seed); aR(s, x, y0 - hh, w - 4, hh, col); }
+      };
+      layer(14, 268, 64, '#2a1020', 1); layer(38, 300, 48, '#3a1428', 20);
+      aR(s, 0, 300, 512, 84, '#2a0f14');
+      for (let i = 0; i < 14; i++) { const x = (((i * 44 - t * 130) % 616) + 616) % 616 - 44; aR(s, x, 312, 26, 4, '#5a1f24'); }
+      const ph = (t % 2.5) / 2.5, j = ph < 0.4 ? Math.sin(ph / 0.4 * Math.PI) * 52 : 0, hy = 300 - j, run = Math.sin(t * 12) * 5;
+      aR(s, 104, hy - 36, 20, 26, '#ff5a1f'); aR(s, 104 + run, hy - 10, 7, 10, '#222'); aR(s, 113 - run, hy - 10, 7, 10, '#222');
+      aC(s, 114, hy - 44, 10, '#ffd3b0'); aR(s, 122, hy - 32, 26, 6, '#cfcfcf');
+      for (let k = 0; k < 5; k++) { const bx = 150 + ((t * 300 + k * 72) % 360); aR(s, bx, hy - 31, 10, 3, '#ffe600'); }
+      const cyc = (t * 90) % 420, ex = 500 - cyc;
+      if (cyc < 250) { aR(s, ex, 268, 24, 32, '#39ff14'); aR(s, ex + 4, 276, 6, 6, '#050203'); }
+      else { const r = (cyc - 250) * 0.26; aC(s, 250, 284, r, '#ffe600'); aC(s, 250, 284, r * 0.6, '#ff5a1f'); }
+      aT(s, 'SCORE 004200', 18, 34, 12, '#ffb020'); aT(s, 'x3', 494, 34, 12, '#ff5a1f', 'right');
+    },
+    adventure(s, t){
+      aR(s, 0, 0, 512, 384, '#0e2a3a');
+      for (let c = 0; c < 3; c++) { const x = (((c * 230 - t * 10) % 690) + 690) % 690 - 90, y = 64 + c * 34; aC(s, x, y, 18, '#2f5f75'); aC(s, x + 22, y + 4, 14, '#2f5f75'); aC(s, x - 20, y + 5, 13, '#2f5f75'); }
+      for (let h = 0; h < 3; h++) { const x = (((h * 260 - t * 22) % 780) + 780) % 780 - 130; aC(s, x, 350, 90, '#1d5a3a'); }
+      const sp = t * 90, base = Math.floor(sp / 32), off = sp % 32;
+      for (let k = -1; k < 17; k++) { if ((base + k) % 8 < 5) { const x = k * 32 - off; aR(s, x, 300, 31, 8, '#639922'); aR(s, x, 308, 31, 80, '#6b3f1d'); } }
+      const c = (sp + 120) % 256, d = (c - 136 + 256) % 256, jh = d < 128 ? Math.sin(d / 128 * Math.PI) * 74 : 0, py = 300 - jh;
+      aC(s, 120, py - 38, 8, '#ffd3b0'); aR(s, 112, py - 48, 16, 6, '#e24b4a'); aR(s, 112, py - 30, 16, 18, '#185FA5');
+      const lg = Math.sin(t * 14) * 4 * (jh > 0 ? 0 : 1); aR(s, 112 + lg, py - 12, 6, 12, '#26215c'); aR(s, 122 - lg, py - 12, 6, 12, '#26215c');
+      for (let k = 0; k < 4; k++) { const x = (((k * 130 - sp) % 520) + 520) % 520 - 4; aC(s, x, 236 + Math.sin(t * 4 + k) * 5, 6, '#ffe600'); }
+      aT(s, 'WORLD 1-1', 18, 34, 12, '#c9e7f0');
+    },
+    sandbox(s, t){
+      aR(s, 0, 0, 512, 384, '#0e1a2a');
+      const n = Math.min(SANDBOX_CELLS.length, Math.floor(((t % 9) / 6.5) * SANDBOX_CELLS.length));
+      for (let i = 0; i < n; i++) { const q = SANDBOX_CELLS[i]; aR(s, q[0] * 32, q[1] * 32, 31, 31, SANDBOX_COL[q[2]]); }
+      if (n < SANDBOX_CELLS.length) { const q = SANDBOX_CELLS[n]; s.strokeStyle = '#22e0ff'; s.lineWidth = 2; s.strokeRect(q[0] * 32 + 1, q[1] * 32 + 1, 30, 30); }
+      aT(s, 'BLOCKS ' + n, 18, 34, 12, '#22e0ff');
+    },
+    arcade(s, t){
+      aR(s, 0, 0, 512, 384, '#020402');
+      const idx = Math.floor(t * 2.2), pos = idx % 14, ox = (pos < 7 ? pos : 14 - pos) * 14, oy = (Math.floor(idx / 14) % 4) * 12, fr = idx % 2, cols = ['#ff2bd6', '#22e0ff', '#39ff14'];
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) {
+        const px = 76 + c * 62 + ox, py = 96 + r * 44 + oy, col = cols[r];
+        aR(s, px, py, 34, 16, col); aR(s, px + 5, py - 5, 24, 5, col); aR(s, px + (fr ? 0 : 5), py + 16, 7, 5, col); aR(s, px + (fr ? 27 : 22), py + 16, 7, 5, col);
+      }
+      const sx = 256 + Math.sin(t * 0.9) * 150;
+      aR(s, sx - 16, 318, 32, 12, '#ffe600'); aR(s, sx - 4, 308, 8, 10, '#ffe600'); aR(s, sx - 1, 318 - ((t * 0.8) % 1) * 230, 3, 10, '#f1efe8');
+      aT(s, 'SCORE 001240', 18, 34, 12, '#ffe600'); aT(s, 'HI 012340', 494, 34, 12, '#ffe600', 'right');
+    },
+    toybox(s, t){
+      aR(s, 0, 0, 512, 384, '#1a1030');
+      const n = Math.floor(t / 0.6), ph = (t % 0.6) / 0.6, pulse = Math.max(0, 1 - ph * 4) * 9;
+      aC(s, 256, 200, 74 + pulse, '#b06a2c');
+      [[-30, -24], [24, -38], [38, 12], [-18, 26], [-46, 4], [6, -4]].forEach(p => aC(s, 256 + p[0], 200 + p[1], 7, '#4a2610'));
+      s.globalAlpha = 1 - ph; aT(s, '+1', 256 + ((n % 3) - 1) * 46, 132 - ph * 46, 14, '#ffe600', 'center'); s.globalAlpha = 1;
+      aT(s, 'COOKIES ' + ((1000 + n * 3) % 100000), 256, 72, 14, '#ffb020', 'center');
+      s.save(); s.translate(84, 290); s.rotate(t * 2); aR(s, -22, -22, 44, 44, '#f1efe8');
+      [[-10, -10], [10, 10], [0, 0], [-10, 10], [10, -10]].forEach(p => aC(s, p[0], p[1], 4, '#111')); s.restore();
+      aC(s, 430, 300 - Math.abs(Math.sin(t * 4)) * 90, 16, '#ff2bd6');
+    },
+    portals(s, t){
+      aR(s, 0, 0, 512, 384, '#04120e');
+      for (let i = 0; i < 5; i++) {
+        const r = 30 + i * 28, dir = i % 2 ? 1 : -1, a0 = t * dir * (1 + i * 0.3);
+        s.strokeStyle = i % 2 ? '#00e5a0' : '#22e0ff'; s.lineWidth = 5;
+        s.beginPath(); s.arc(256, 190, r, a0, a0 + Math.PI * 1.2); s.stroke();
+        s.beginPath(); s.arc(256, 190, r, a0 + Math.PI * 1.5, a0 + Math.PI * 1.85); s.stroke();
+      }
+      aC(s, 256, 190, 12 + Math.sin(t * 5) * 3, '#eafff8');
+      for (let k = 0; k < 18; k++) { const ang = t * 2 + k * 0.35, rr = 170 - ((t * 40 + k * 9) % 170); aC(s, 256 + Math.cos(ang) * rr, 190 + Math.sin(ang) * rr * 0.8, 3, '#00e5a0'); }
+      aT(s, 'LINKS OUT', 256, 60, 16, '#00e5a0', 'center');
+      aT(s, '>>', 256 + ((t * 200) % 250), 196, 14, '#eafff8');
+    },
+    creative(s, t){
+      aR(s, 0, 0, 512, 384, '#2a1f45'); aR(s, 40, 64, 432, 238, '#f1efe8');
+      aT(s, 'UNTITLED.BMP', 18, 34, 12, '#ffb020');
+      const N = 160, k = Math.min(N, Math.floor(((t % 8) / 5.5) * N)), cs = ['#d4537e', '#378ADD', '#639922'];
+      s.lineWidth = 6; s.lineCap = 'round';
+      for (let i = 1; i < k; i++) { s.strokeStyle = cs[Math.floor(i / (N / 3)) % 3]; s.beginPath(); s.moveTo(58 + (i - 1) * 2.5, 184 + Math.sin((i - 1) * 0.11) * 68); s.lineTo(58 + i * 2.5, 184 + Math.sin(i * 0.11) * 68); s.stroke(); }
+      if (k > 0) { s.strokeStyle = '#2c2c2a'; s.lineWidth = 2; s.beginPath(); s.arc(58 + k * 2.5, 184 + Math.sin(k * 0.11) * 68, 8, 0, 6.2832); s.stroke(); }
+      ['#d4537e', '#378ADD', '#639922', '#EF9F27', '#7F77DD', '#2c2c2a'].forEach((c, i) => aR(s, 40 + i * 36, 312, 28, 26, c));
+      const sl = Math.floor(k / (N / 3)) % 3; s.strokeStyle = '#f1efe8'; s.lineWidth = 2; s.strokeRect(39 + sl * 36, 311, 30, 28);
+    },
+  };
+
+  // reduced-motion players get a still frame; everyone else a per-machine offset clock
+  function attractT(cab){ return reduceMotion ? 4 + cab.phaseOff : performance.now() / 1000 + cab.phaseOff * 5; }
+
+  function drawAttract(cab, t){
+    const s = cab.sctx;
+    s.save();
+    s.shadowBlur = 0; s.globalAlpha = 1; s.lineCap = 'butt'; s.textBaseline = 'alphabetic';
+    (ATTRACT[cab.id] || ATTRACT.arcade)(s, t);
+    // bottom strip alternates between INSERT COIN and a peek at what's on this machine
+    aR(s, 0, SCREEN_H - 40, SCREEN_W, 40, 'rgba(0,0,0,0.68)');
+    const step = Math.floor(t / 2.2), bright = hexStr(cab.accent);
+    if (step % 2 === 0) { if (aBlink(t)) aT(s, 'INSERT COIN', SCREEN_W / 2, SCREEN_H - 14, 14, bright, 'center'); }
+    else {
+      const g = cab.games[(Math.floor(step / 2) + Math.floor(cab.phaseOff * 3)) % cab.games.length];
+      aT(s, ('TRY ' + g.title.toUpperCase()).slice(0, 28), SCREEN_W / 2, SCREEN_H - 14, 12, bright, 'center');
+    }
+    // scanlines + vignette, same as the menu screen
+    s.fillStyle = 'rgba(0,0,0,0.25)';
+    for (let y = 0; y < SCREEN_H; y += 4) s.fillRect(0, y, SCREEN_W, 1);
+    const vg = s.createRadialGradient(SCREEN_W / 2, SCREEN_H / 2, SCREEN_H * 0.25, SCREEN_W / 2, SCREEN_H / 2, SCREEN_H * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+    s.fillStyle = vg; s.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    s.restore();
+    cab.screenTexture.needsUpdate = true;
+  }
+
   function buildCabinet(def){
     const group = new THREE.Group();
     group.position.set(def.x, 0, def.z);
@@ -1595,7 +1951,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     scene.add(group);
 
     const accent = def.accent;
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x140a24, roughness: 0.5, metalness: 0.3 });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: def.id === 'horror' ? 0x0a0407 : 0x140a24, roughness: 0.5, metalness: 0.3 });
     const trimMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.55, roughness: 0.4 });
 
     const base = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.3, 1.05), bodyMat);
@@ -1756,6 +2112,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       staticUntil: 0, lastSel: -1              // brief screen static when the highlighted game changes
     };
 
+    decorateCabinet(cab, group, controlGroup);
+
     // tag every piece so a raycast hit can say which machine it belongs to
     screenMesh.userData.cab = cab;
     stickGrabZone.userData.cab = cab;
@@ -1770,6 +2128,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   }
 
   function drawMenu(cab){
+    if (cab !== activeCab || performance.now() < cab.bootStart) { drawAttract(cab, attractT(cab)); return; }
     const sctx = cab.sctx;
     const bright = hexStr(cab.accent);
     const dim = mixHex(cab.accent, 0.32);
@@ -3621,6 +3980,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 
   let lastFrame = performance.now();
   let saveAccumulator = 0;
+  // attract screens: only the machines nearest to you animate, and only ~12 times a second
+  const ATTRACT_N = isMobile ? 2 : 3, ATTRACT_MS = isMobile ? 100 : 80;
+  let lastAttractDraw = 0;
 
   function updatePlayer(dt){
     if(phase!==PHASE_ROOM || cameraAnimating) return;
@@ -3766,6 +4128,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         if (now < c.flickerUntil) f = 0.35 + Math.random() * 0.5;
       }
       c.marqueeMat.color.setScalar(f);
+      if (c.tick) c.tick(now);   // genre extras: spinning wheel, dice, portal rings, dripping blood...
     });
 
     // back-wall neon sign: dark until the arcade powers on, then flickers now and then
@@ -3794,6 +4157,18 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       light.color.setHex(c.accent);
       const base = (c === activeCab) ? 1.2 : (arcadePowered ? 1.0 : 0.55);
       light.intensity = base + pulse * (c === activeCab ? 1 : 0.4);
+    }
+
+    // attract mode: redraw the nearest idle machines (plus one that's still being flown to)
+    if (!reduceMotion && !gameOpen && now - lastAttractDraw > ATTRACT_MS) {
+      lastAttractDraw = now;
+      let drawn = 0;
+      for (let i = 0; i < glowOrder.length && drawn < ATTRACT_N; i++) {
+        const c = glowOrder[i];
+        if (c === activeCab && now >= c.bootStart) continue;   // the machine you're using draws its own menu
+        drawMenu(c);
+        drawn++;
+      }
     }
 
     if(equippedSkin==='gold'){ const shimmer=.11+Math.sin(now*.003)*.045; playerMat.emissiveIntensity=shimmer; }
