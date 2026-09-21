@@ -487,6 +487,16 @@
   .plan-board{fill:#22e0ff;fill-opacity:.25;stroke:#22e0ff;stroke-width:1;}
   .plan-prize-label{fill:#ffe600;}
   .plan-board-label{fill:#22e0ff;}
+  #map-search{display:block;width:100%;margin:0 0 12px;padding:10px 12px;background:#140a24;color:#eae6ff;border:2px solid #3a2860;border-radius:4px;font:10px 'Press Start 2P',monospace;outline:none;}
+  #map-search:focus{border-color:#00e5a0;}
+  #map-results{display:none;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .search-empty{text-align:center;color:#6f668c;font:10px monospace;padding:14px 0;}
+  #quality-switch button{min-width:52px;}
+  .wheel-panel{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px 0 2px;}
+  #wheel-canvas{width:min(250px,70vw);height:auto;display:block;}
+  .wheel-info{color:#8a7fb0;font-size:.34rem;text-align:center;line-height:1.9;}
+  .wheel-btn{font-family:'Press Start 2P',monospace;font-size:.5rem;padding:11px 20px;background:#ffe600;color:#050505;border:none;border-radius:4px;cursor:pointer;}
+  .wheel-btn:disabled{opacity:.4;cursor:not-allowed;}
   #plan-player{fill:#fff;stroke:#050505;stroke-width:1.2;}
   #plan-player-ring{fill:none;stroke:#fff;stroke-opacity:.5;stroke-width:1;}
   @media (prefers-reduced-motion: reduce){ .plan-cab.here .cab-body{animation:none;fill-opacity:.7;} }
@@ -810,7 +820,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   <div class="panel">
     <h2>ARCADE FLOOR</h2>
     <div class="sub" id="map-sub">TAP A CABINET TO WARP TO IT</div>
-    <div class="map-layout">
+    <input id="map-search" type="search" placeholder="FIND A GAME...  (PRESS /)" autocomplete="off" spellcheck="false" aria-label="find a game">
+    <div id="map-results"></div>
+    <div class="map-layout" id="map-layout">
       <div id="map-plan-wrap"></div>
       <div id="map-list"></div>
     </div>
@@ -830,6 +842,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         <div class="inventory-tabs">
           <button class="inventory-tab active" data-tab="suits">SUITS</button>
           <button class="inventory-tab" data-tab="accessories">ACCESSORIES</button>
+          <button class="inventory-tab" data-tab="wheel">LUCKY WHEEL</button>
         </div>
         <div id="customize-grid"></div>
       </div>
@@ -854,6 +867,17 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     <div class="volume-row sub-vol">
       <span class="vol-label">EFFECTS</span>
       <input type="range" id="sfx-slider" min="0" max="100" value="100" aria-label="effects and cabinet hum volume">
+    </div>
+    <div class="settings-section-title">GRAPHICS &amp; EXTRAS</div>
+    <div class="settings-row">
+      <div class="settings-row-label">GRAPHICS<span class="settings-row-sub">Auto lowers effects if it runs slowly</span></div>
+      <div class="mode-switch" id="quality-switch">
+        <button type="button" data-q="auto">AUTO</button><button type="button" data-q="low">LOW</button><button type="button" data-q="high">HIGH</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-label">PHOTO<span class="settings-row-sub">Save a picture of the arcade (P)</span></div>
+      <button id="photo-btn" class="toggle-btn">SNAP</button>
     </div>
     <div class="settings-section-title">ADVANCED</div>
     <div class="settings-row">
@@ -1117,6 +1141,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     function click(){ tone(880, 0.05, 'square', sfxGain, 0.18, 0); }
     function launchSfx(){ tone(523.25, 0.1, 'square', sfxGain, 0.28, 0); tone(783.99, 0.14, 'square', sfxGain, 0.28, 0.09); }
     function whoosh(){ noiseBurst(0.35, 700, sfxGain, 0.14); }
+    // camera shutter click for photo mode
+    function shutter(){
+      noiseBurst(0.05, 2500, sfxGain, 0.18);
+      tone(1200, 0.03, 'square', sfxGain, 0.12, 0.03);
+      tone(700, 0.05, 'square', sfxGain, 0.12, 0.07);
+    }
     // classic two-note coin "ka-ching" plus a tiny metallic tick, played when a game launches
     function coin(){
       noiseBurst(0.05, 3200, sfxGain, 0.08);
@@ -1281,7 +1311,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     function suspend(){ if (ctx && ctx.state === 'running') { try { ctx.suspend(); } catch(e){} } }
     function resume(){ if (ctx && unlocked && ctx.state !== 'running') { try { ctx.resume(); } catch(e){} } }
 
-    return { footstep, jump: jumpSfx, land, click, launch: launchSfx, whoosh, coin, dash, powerOn, error: errorSfx, setMood,
+    return { footstep, jump: jumpSfx, land, click, launch: launchSfx, whoosh, coin, shutter, dash, powerOn, error: errorSfx, setMood,
              setMuted, isMuted, setVolume, getVolume, setMusicVolume, getMusicVolume, setSfxVolume, getSfxVolume,
              duckMusic, setHum, suspend, resume, unlock };
   })();
@@ -1527,7 +1557,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   dust.frustumCulled = false;
   scene.add(dust);
   function updateDust(dt, t){
-    if (reduceMotion) return;
+    if (reduceMotion || !dust.visible) return;
     for (let i = 0; i < DUST_COUNT; i++) {
       const s = dustSeeds[i];
       dustPositions[i*3+1] += dt * (0.035 + s * 0.06);
@@ -1535,6 +1565,38 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       if (dustPositions[i*3+1] > 4.8) dustPositions[i*3+1] = 0.25;
     }
     dustGeo.attributes.position.needsUpdate = true;
+  }
+
+  // mirror ball hanging from the ceiling: flat-shaded facets whose brightness twinkles
+  const discoGeo = new THREE.IcosahedronGeometry(0.45, 1);
+  const discoFaces = discoGeo.attributes.position.count / 3;
+  const discoCol = new Float32Array(discoGeo.attributes.position.count * 3);
+  const discoTints = [[1, 1, 1], [1, 0.75, 0.95], [0.75, 0.95, 1], [1, 0.95, 0.7]];
+  function setDiscoFace(f, v, tint){
+    for (let k = 0; k < 3; k++) {
+      const o = (f * 3 + k) * 3;
+      discoCol[o] = v * tint[0]; discoCol[o + 1] = v * tint[1]; discoCol[o + 2] = v * tint[2];
+    }
+  }
+  for (let f = 0; f < discoFaces; f++) setDiscoFace(f, 0.25 + Math.random() * 0.75, discoTints[f % 4]);
+  discoGeo.setAttribute('color', new THREE.BufferAttribute(discoCol, 3));
+  const discoMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+  const disco = new THREE.Mesh(discoGeo, discoMat);
+  disco.position.set(0, 5.4, -1.0);
+  scene.add(disco);
+  const discoString = new THREE.Mesh(new THREE.BoxGeometry(0.015, 2.2, 0.015), new THREE.MeshBasicMaterial({ color: 0x3a2f55 }));
+  discoString.position.set(0, 6.95, -1.0);
+  scene.add(discoString);
+  let discoNextSparkle = 0;
+  function updateDisco(dt, now){
+    discoMat.color.setScalar(arcadePowered ? 1 : 0.25);
+    if (reduceMotion) return;
+    disco.rotation.y += dt * 0.5;
+    if (now > discoNextSparkle) {
+      discoNextSparkle = now + 90;
+      for (let i = 0; i < 14; i++) setDiscoFace(Math.floor(Math.random() * discoFaces), 0.25 + Math.random() * 0.95, discoTints[(Math.random() * 4) | 0]);
+      discoGeo.attributes.color.needsUpdate = true;
+    }
   }
 
   // =====================================================================
@@ -2268,7 +2330,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   function roomHintText(){
     return isMobile
       ? 'drag the left pad to move &nbsp;&bull;&nbsp; JUMP to jump<br>walk up to any cabinet and tap it'
-      : 'WASD &bull; move &nbsp;&bull;&nbsp; mouse &bull; look around &nbsp;&bull;&nbsp; M &bull; floor map<br>walk up to any cabinet to play its genre';
+      : 'WASD &bull; move &nbsp;&bull;&nbsp; mouse &bull; look around &nbsp;&bull;&nbsp; M &bull; map &nbsp;&bull;&nbsp; / &bull; find a game<br>walk up to any cabinet to play its genre';
   }
   function arcadeHintText(){
     const name = activeCab ? activeCab.title : 'ARCADE';
@@ -2480,6 +2542,33 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     localStorage.setItem('neonArcade.sessions', String(sessions));
   } catch(e){}
 
+  // ---- daily visit streak: the first visit of each day pays bonus tickets ----
+  let streak = 1, dailyBonus = 0;
+  (function(){
+    const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    try {
+      const now = new Date(), today = dayKey(now);
+      const last = localStorage.getItem('neonArcade.lastVisitDay');
+      let st = parseInt(localStorage.getItem('neonArcade.streak'), 10) || 0;
+      if (last !== today) {
+        const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        st = (last === dayKey(yesterday)) ? st + 1 : 1;
+        dailyBonus = Math.min(10, 3 + st);
+        localStorage.setItem('neonArcade.lastVisitDay', today);
+        localStorage.setItem('neonArcade.streak', String(st));
+      }
+      streak = Math.max(1, st);
+    } catch(e){}
+  })();
+  function announceDailyBonus(){
+    if (!dailyBonus) return;
+    const b = dailyBonus; dailyBonus = 0;
+    addTickets(b);
+    showToast('DAILY BONUS +' + b + ' TICKETS' + (streak > 1 ? ' (' + streak + ' DAY STREAK)' : ''), '#39ff14', 3400);
+    AudioEngine.coin();
+    checkAchievements();
+  }
+
   function saveLeaderboardData(){
     try {
       localStorage.setItem('neonArcade.gameStats', JSON.stringify(gameStats));
@@ -2521,6 +2610,14 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       check:() => equippedSkin !== 'grey' && equippedCosmetic !== 'none' },
     { id:'warp_drive',   name:'WARP DRIVE',     desc:'WARP TO A CABINET FROM THE FLOOR MAP',
       check:() => !!achFlags.warp },
+    { id:'high_roller',  name:'HIGH ROLLER',    desc:'HIT THE JACKPOT ON THE LUCKY WHEEL',
+      check:() => !!achFlags.jackpot },
+    { id:'regular',      name:'REGULAR',        desc:'VISIT ON 3 DAYS IN A ROW',
+      check:() => streak >= 3 },
+    { id:'devoted',      name:'DEVOTED',        desc:'VISIT ON 7 DAYS IN A ROW',
+      check:() => streak >= 7 },
+    { id:'cheat_code',   name:'CHEAT CODE',     desc:'ENTER A CERTAIN FAMOUS CODE',
+      check:() => !!achFlags.konami },
   ];
   function saveAchievements(){
     try {
@@ -2625,8 +2722,141 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     AudioEngine.click();
   }));
 
+  // ---------------------------------------------------------------------
+  // Lucky wheel — a tab in the shop panel. 5 tickets a spin.
+  // ---------------------------------------------------------------------
+  const WHEEL_COST = 5;
+  // WHEEL-MATH-START
+  const WHEEL_SLICES = [
+    { label:'+3',   tickets:3,  w:22, color:'#22e0ff' },
+    { label:'OOPS', tickets:0,  w:16, color:'#3a2860' },
+    { label:'+8',   tickets:8,  w:14, color:'#39ff14' },
+    { label:'+5',   tickets:5,  w:20, color:'#ff2bd6' },
+    { label:'ITEM', item:true,  w:7,  color:'#b060e0' },
+    { label:'+12',  tickets:12, w:8,  color:'#ff8a20' },
+    { label:'OOPS', tickets:0,  w:11, color:'#3a2860' },
+    { label:'+50',  tickets:50, w:2,  color:'#ffe600', jackpot:true },
+  ];
+  const TWO_PI = Math.PI * 2;
+  const WHEEL_STEP = TWO_PI / WHEEL_SLICES.length;
+  function pickSlice(r01){
+    const total = WHEEL_SLICES.reduce((a, s) => a + s.w, 0);
+    let r = r01 * total;
+    for (let i = 0; i < WHEEL_SLICES.length; i++) { r -= WHEEL_SLICES[i].w; if (r < 0) return i; }
+    return 0;
+  }
+  // which slice sits under the pointer (top of the wheel) at rotation `rot`
+  function wheelSliceAt(rot){
+    const m = (((-rot) % TWO_PI) + TWO_PI) % TWO_PI;
+    return Math.floor(m / WHEEL_STEP) % WHEEL_SLICES.length;
+  }
+  // how far to turn from `cur` so slice `idx` ends up centred under the pointer
+  function wheelSpinTotal(cur, idx, extraTurns){
+    const target = (((-(idx * WHEEL_STEP + WHEEL_STEP / 2)) % TWO_PI) + TWO_PI) % TWO_PI;
+    const curMod = ((cur % TWO_PI) + TWO_PI) % TWO_PI;
+    let delta = target - curMod; if (delta < 0) delta += TWO_PI;
+    return delta + TWO_PI * extraTurns;
+  }
+  // WHEEL-MATH-END
+  let wheelRot = 0, wheelSpinning = false, wheelCanvas = null, wheelBtn = null, wheelInfo = null;
+
+  function drawWheel(){
+    if (!wheelCanvas) return;
+    const g = wheelCanvas.getContext('2d'), w = wheelCanvas.width, cx = w / 2, cy = w / 2, R = w / 2 - 14;
+    g.clearRect(0, 0, w, w);
+    WHEEL_SLICES.forEach((s, i) => {
+      const a0 = wheelRot + i * WHEEL_STEP - Math.PI / 2;
+      g.fillStyle = s.color; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, a0, a0 + WHEEL_STEP); g.closePath(); g.fill();
+      g.strokeStyle = '#0a0612'; g.lineWidth = 3; g.stroke();
+      g.save(); g.translate(cx, cy); g.rotate(a0 + WHEEL_STEP / 2);
+      g.textAlign = 'right'; g.fillStyle = s.color === '#3a2860' ? '#8a7fb0' : '#050505';
+      g.font = "12px 'Press Start 2P', monospace"; g.fillText(s.label, R - 10, 5); g.restore();
+    });
+    const blinkPhase = Math.floor(performance.now() / 200);
+    for (let i = 0; i < 16; i++) {
+      const a = i * Math.PI / 8;
+      g.fillStyle = ((i + blinkPhase) % 2) ? '#fff2b0' : '#4a3f1a';
+      g.beginPath(); g.arc(cx + Math.cos(a) * (R + 7), cy + Math.sin(a) * (R + 7), 3, 0, 6.2832); g.fill();
+    }
+    g.fillStyle = '#0a0612'; g.beginPath(); g.arc(cx, cy, 16, 0, 6.2832); g.fill();
+    g.strokeStyle = '#ffe600'; g.lineWidth = 3; g.stroke();
+    g.fillStyle = '#ffe600'; g.beginPath(); g.moveTo(cx - 10, 2); g.lineTo(cx + 10, 2); g.lineTo(cx, 22); g.closePath(); g.fill();
+  }
+
+  function updateWheelUI(){
+    if (wheelBtn) {
+      wheelBtn.disabled = wheelSpinning || (!adminMode && tickets < WHEEL_COST);
+      wheelBtn.textContent = wheelSpinning ? 'SPINNING...' : (adminMode ? 'SPIN (FREE)' : 'SPIN  \uD83C\uDF9F ' + WHEEL_COST);
+    }
+    if (wheelInfo) wheelInfo.innerHTML = 'YOU HAVE ' + (adminMode ? '&infin;' : tickets) + ' TICKETS<br>LAND ON ITEM FOR A FREE MYSTERY SUIT OR ACCESSORY';
+  }
+
+  function spinWheel(){
+    if (wheelSpinning) return;
+    if (!adminMode && tickets < WHEEL_COST) { AudioEngine.error(); return; }
+    if (!adminMode) addTickets(-WHEEL_COST);
+    wheelSpinning = true; updateWheelUI();
+    const idx = pickSlice(Math.random());
+    const total = wheelSpinTotal(wheelRot, idx, 4 + Math.floor(Math.random() * 2));
+    const start = wheelRot, t0 = performance.now(), dur = reduceMotion ? 400 : 3800;
+    let lastSlice = -1;
+    (function step(now){
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      wheelRot = start + total * e;
+      const sl = Math.floor(wheelRot / WHEEL_STEP);
+      if (sl !== lastSlice) { lastSlice = sl; AudioEngine.click(); }
+      drawWheel();
+      if (p < 1) requestAnimationFrame(step); else finishSpin(idx);
+    })(performance.now());
+  }
+
+  function finishSpin(idx){
+    wheelSpinning = false;
+    const s = WHEEL_SLICES[idx];
+    if (s.item) {
+      const pool = SKIN_OPTIONS.filter(x => ownedSkins.indexOf(x.id) === -1).map(x => ({ kind: 'skin', id: x.id, name: x.name + ' SUIT' }))
+        .concat(COSMETIC_OPTIONS.filter(x => x.id !== 'none' && ownedCosmetics.indexOf(x.id) === -1).map(x => ({ kind: 'cos', id: x.id, name: x.name })));
+      if (pool.length) {
+        const it = pool[Math.floor(Math.random() * pool.length)];
+        if (it.kind === 'skin') { ownedSkins.push(it.id); try { localStorage.setItem('neonArcade.ownedSkins', JSON.stringify(ownedSkins)); } catch(e){} }
+        else { ownedCosmetics.push(it.id); try { localStorage.setItem('neonArcade.ownedCosmetics', JSON.stringify(ownedCosmetics)); } catch(e){} }
+        showToast('YOU WON: ' + it.name + '!', '#b060e0', 3200);
+        AudioEngine.coin();
+      } else {
+        addTickets(15);
+        showToast('YOU OWN IT ALL! +15 TICKETS', '#ffe600', 2800);
+        AudioEngine.coin();
+      }
+    } else if (s.tickets > 0) {
+      addTickets(s.tickets);
+      showToast((s.jackpot ? 'JACKPOT! +' : 'YOU WON +') + s.tickets + ' TICKETS', s.jackpot ? '#ffe600' : '#39ff14', 2800);
+      AudioEngine.coin();
+      if (s.jackpot) { achFlags.jackpot = true; saveAchievements(); confettiBurst(); }
+    } else {
+      showToast('NO LUCK - TRY AGAIN', '#ff8a20', 2000);
+      AudioEngine.error();
+    }
+    checkAchievements();
+    updateWheelUI();
+    drawWheel();
+  }
+
+  function renderWheelPanel(){
+    const panel = document.createElement('div');
+    panel.className = 'wheel-panel';
+    panel.innerHTML = '<canvas id="wheel-canvas" width="240" height="240"></canvas><div class="wheel-info" id="wheel-info"></div><button class="wheel-btn" id="wheel-spin"></button>';
+    customizeGrid.appendChild(panel);
+    wheelCanvas = panel.querySelector('#wheel-canvas');
+    wheelInfo = panel.querySelector('#wheel-info');
+    wheelBtn = panel.querySelector('#wheel-spin');
+    wheelBtn.addEventListener('click', () => { AudioEngine.click(); spinWheel(); });
+    drawWheel();
+    updateWheelUI();
+  }
+
   function renderCustomizeMenu(){
     customizeGrid.innerHTML = '';
+    if (inventoryTab === 'wheel') { renderWheelPanel(); return; }
     if(inventoryTab==='suits'){
       SKIN_OPTIONS.forEach(skin => {
         const owned = adminMode || ownedSkins.indexOf(skin.id) !== -1;
@@ -2761,13 +2991,63 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     ring.setAttribute('cx', px); ring.setAttribute('cy', pz);
   }
 
-  function openFloorMap(){
+  // ---- find a game: type in the box, tap a result to warp to its cabinet with that game highlighted ----
+  const mapSearch = document.getElementById('map-search');
+  const mapResults = document.getElementById('map-results');
+  const mapLayout = document.getElementById('map-layout');
+  let searchFirstHit = null;
+  function gotoGame(cab, idx){
+    mapOverlay.style.display = 'none';
+    mapSearch.value = '';
+    renderSearch();
+    cab.selected = idx;
+    AudioEngine.click();
+    if (activeCab === cab && phase === PHASE_ARCADE) { drawMenu(cab); saveSession({ phase: PHASE_ARCADE }); }
+    else travelToCabinet(cab);
+  }
+  function renderSearch(){
+    const q = mapSearch.value.trim().toLowerCase();
+    searchFirstHit = null;
+    if (!q) { mapResults.style.display = 'none'; mapLayout.style.display = ''; return; }
+    const hits = [];
+    cabinets.forEach(cab => cab.games.forEach((g, i) => {
+      const t = g.title.toLowerCase();
+      const score = t.indexOf(q) === 0 ? 0 : (t.indexOf(q) !== -1 ? 1 : (cab.title.toLowerCase().indexOf(q) !== -1 ? 2 : 3));
+      if (score < 3) hits.push({ cab, i, g, score });
+    }));
+    hits.sort((a, b) => a.score - b.score);
+    mapLayout.style.display = 'none';
+    mapResults.style.display = 'flex';
+    mapResults.innerHTML = '';
+    if (!hits.length) { mapResults.innerHTML = '<div class="search-empty">NO GAMES MATCH</div>'; return; }
+    searchFirstHit = hits[0];
+    hits.slice(0, 8).forEach(h => {
+      const row = document.createElement('div');
+      row.className = 'map-row'; row.tabIndex = 0; row.setAttribute('role', 'button');
+      row.style.setProperty('--row-accent', hexStr(h.cab.accent));
+      const name = document.createElement('span'); name.className = 'map-name'; name.textContent = h.g.title;
+      const where = document.createElement('span'); where.className = 'map-where'; where.textContent = h.cab.title;
+      row.appendChild(name); row.appendChild(where);
+      row.addEventListener('click', () => gotoGame(h.cab, h.i));
+      row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gotoGame(h.cab, h.i); } });
+      mapResults.appendChild(row);
+    });
+  }
+  mapSearch.addEventListener('input', renderSearch);
+  mapSearch.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && searchFirstHit) { e.preventDefault(); gotoGame(searchFirstHit.cab, searchFirstHit.i); }
+  });
+
+  function openFloorMap(focusSearch){
     closeMenus();
+    mapSearch.value = '';
+    renderSearch();
     renderFloorMap();
     mapOverlay.style.display = 'flex';
     AudioEngine.click();
+    if (focusSearch === true) setTimeout(() => mapSearch.focus(), 30);
   }
-  document.getElementById('map-btn').addEventListener('click', openFloorMap);
+  document.getElementById('map-btn').addEventListener('click', () => openFloorMap(false));
   document.getElementById('map-close-btn').addEventListener('click', () => { mapOverlay.style.display = 'none'; });
   mapOverlay.addEventListener('click', e => { if (e.target === mapOverlay) mapOverlay.style.display = 'none'; });
 
@@ -3016,6 +3296,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     const cabsVisited = CABINETS.filter(c => (cabinetStats[c.title] || 0) > 0).length;
     leaderboardList.innerHTML = `
       <div class="stat-row"><span>VISITS</span><span class="stat-value">${sessions}</span></div>
+      <div class="stat-row"><span>DAY STREAK</span><span class="stat-value">${streak}</span></div>
       <div class="stat-row"><span>GAMES PLAYED</span><span class="stat-value">${totalLaunches}</span></div>
       <div class="stat-row"><span>ARCADE TIME</span><span class="stat-value">${minutes}M</span></div>
       <div class="stat-row"><span>CABINETS PLAYED</span><span class="stat-value">${cabsVisited}/${CABINETS.length}</span></div>
@@ -3260,6 +3541,31 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     addNeon(0.04, 1.7, 0.04, HALL_X - 1.1, 1.95, 7.36, 0xffe600, 1.0);
     addNeon(0.04, 1.7, 0.04, HALL_X + 1.1, 1.95, 7.36, 0xffe600, 1.0);
 
+    // ---- Tix-Bot: the counter's mascot — watches you, waves when you're close ----
+    const botMetal = new THREE.MeshStandardMaterial({ color: 0xb8c0cc, roughness: 0.35, metalness: 0.8 });
+    const botGlow = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.6, roughness: 0.4 });
+    const bot = new THREE.Group(); bot.position.set(-1.6, 0, -0.1); prizeGroup.add(bot);
+    const BM = (geo, mat, x, y, z, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || bot).add(m); return m; };
+    BM(new THREE.BoxGeometry(0.12, 0.5, 0.14), botMetal, -0.1, 0.25, 0);
+    BM(new THREE.BoxGeometry(0.12, 0.5, 0.14), botMetal, 0.1, 0.25, 0);
+    BM(new THREE.BoxGeometry(0.42, 0.5, 0.28), botMetal, 0, 0.75, 0);
+    BM(new THREE.BoxGeometry(0.2, 0.14, 0.02), botGlow, 0, 0.8, 0.15);
+    const botHead = new THREE.Group(); botHead.position.set(0, 1.03, 0); bot.add(botHead);
+    BM(new THREE.BoxGeometry(0.32, 0.26, 0.28), botMetal, 0, 0.13, 0, botHead);
+    BM(new THREE.PlaneGeometry(0.24, 0.1), new THREE.MeshBasicMaterial({ color: 0x22e0ff }), 0, 0.14, 0.145, botHead);
+    BM(new THREE.CylinderGeometry(0.01, 0.01, 0.14, 6), botMetal, 0, 0.33, 0, botHead);
+    BM(new THREE.SphereGeometry(0.03, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff2bd6 }), 0, 0.42, 0, botHead);
+    const armGeo = new THREE.BoxGeometry(0.09, 0.4, 0.1); armGeo.translate(0, -0.2, 0);
+    const botArmL = new THREE.Mesh(armGeo, botMetal); botArmL.position.set(-0.27, 0.95, 0); bot.add(botArmL);
+    const botArmR = new THREE.Mesh(armGeo, botMetal); botArmR.position.set(0.27, 0.95, 0); bot.add(botArmR);
+    const bubbleTex = makeCanvasTex(320, 80, (g, w, h) => {
+      g.fillStyle = '#f1efe8'; g.fillRect(0, 0, w, 58);
+      g.beginPath(); g.moveTo(w / 2 - 12, 58); g.lineTo(w / 2 + 12, 58); g.lineTo(w / 2, 76); g.closePath(); g.fill();
+      g.fillStyle = '#1a1030'; g.textAlign = 'center'; g.font = "14px 'Press Start 2P', monospace"; g.fillText('TRY THE LUCKY WHEEL!', w / 2, 36);
+    });
+    const bubbleMat = new THREE.MeshBasicMaterial({ map: bubbleTex, transparent: true, opacity: 0, depthWrite: false });
+    BM(new THREE.PlaneGeometry(0.95, 0.24), bubbleMat, 0, 1.75, 0.05);
+
     // ---- per-frame: automatic doors, chase lights, signs power up with the arcade ----
     let open = 0, wasOpen = false, lastStep = -1;
     entranceTick = (now, dt) => {
@@ -3279,6 +3585,18 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       const lit = arcadePowered ? 1 : 0.18;
       welcomeSignMat.opacity = lit; prizeSignMat.opacity = lit;
       prizeGlow.material.opacity = arcadePowered ? 0.22 + (nearPrize ? 0.15 : 0) + 0.05 * Math.sin(now * 0.004) : 0.08;
+
+      // Tix-Bot: its world position is the counter's, mirrored (the group is turned round)
+      const bdx = player.position.x - (PRIZE_POS.x + 1.6), bdz = player.position.z - (PRIZE_POS.z + 0.1);
+      const bdist = Math.hypot(bdx, bdz);
+      let yaw = Math.atan2(bdx, bdz) - Math.PI; yaw = Math.atan2(Math.sin(yaw), Math.cos(yaw));
+      const wantYaw = bdist < 7 ? Math.max(-1.1, Math.min(1.1, yaw)) : 0;
+      botHead.rotation.y += (wantYaw - botHead.rotation.y) * Math.min(1, dt * 5);
+      const waving = bdist < 3.8 && phase === PHASE_ROOM && !reduceMotion;
+      botArmR.rotation.z += ((waving ? 2.6 + Math.sin(now * 0.012) * 0.35 : 0.08) - botArmR.rotation.z) * Math.min(1, dt * 8);
+      botArmL.rotation.z = reduceMotion ? 0 : -0.06 + Math.sin(now * 0.002) * 0.04;
+      bot.position.y = reduceMotion ? 0 : 0.012 * Math.sin(now * 0.003);
+      bubbleMat.opacity += ((bdist < 4.5 && phase === PHASE_ROOM ? 0.95 : 0) - bubbleMat.opacity) * Math.min(1, dt * 6);
     };
   })();
 
@@ -3939,6 +4257,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     // Hidden operator shortcut: Ctrl+Shift+Alt+A.
     if (e.ctrlKey && e.shiftKey && e.altKey && lower === 'a') { e.preventDefault(); openAdmin(); return; }
 
+    if (!e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !isTypingTarget(e.target)) feedKonami(k);
+
     if (k === 'Escape') {
       if (anyMenuOpen()) {
         closeMenus();
@@ -3960,7 +4280,18 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 
     // M opens the floor map from anywhere in the arcade (not while a game is running)
     if (!gameOpen && lower === 'm' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      openFloorMap();
+      openFloorMap(false);
+      e.preventDefault();
+      return;
+    }
+    // / opens the floor map with the game-search box ready to type in
+    if (!gameOpen && k === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      openFloorMap(true);
+      e.preventDefault();
+      return;
+    }
+    if (!gameOpen && lower === 'p' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      takePhoto();
       e.preventDefault();
       return;
     }
@@ -4232,8 +4563,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   let lastFrame = performance.now();
   let saveAccumulator = 0;
   // attract screens: only the machines nearest to you animate, and only ~12 times a second
-  const ATTRACT_N = isMobile ? 2 : 3, ATTRACT_MS = isMobile ? 100 : 80;
+  let ATTRACT_N = isMobile ? 2 : 3, ATTRACT_MS = isMobile ? 100 : 80;
   let lastAttractDraw = 0;
+  let fpsWarm = 4, fpsAcc = 0, fpsN = 0;   // frame-rate watch for the AUTO graphics setting
 
   function updatePlayer(dt){
     if(phase!==PHASE_ROOM || cameraAnimating) return;
@@ -4349,6 +4681,23 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     const dt = Math.min((now - lastFrame) / 1000, 0.05);
     lastFrame = now;
 
+    pollGamepad(now);
+
+    // AUTO graphics: if the average frame time stays above ~34ms (under 30 fps) after warm-up, drop to LOW once
+    if (qualitySetting === 'auto' && !lowQuality && !document.hidden && !gameOpen) {
+      fpsWarm -= dt;
+      if (fpsWarm <= 0) {
+        fpsAcc += dt; fpsN++;
+        if (fpsN >= 150) {
+          if (fpsAcc / fpsN > 0.034) {
+            lowQuality = true; applyQuality(); updateQualityUI();
+            showToast('PERFORMANCE MODE ON', '#ff8a20', 2800);
+          }
+          fpsAcc = 0; fpsN = 0;
+        }
+      }
+    }
+
     updatePlayer(dt);
     controls.update();
     // orbiting can otherwise swing the camera out through a wall, into the void
@@ -4448,7 +4797,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       if (phase === PHASE_ROOM) saveSession({phase:PHASE_ROOM});
     }
 
-    if (!(gameOpen && overlay.style.display === 'flex')) updateDust(dt, now);
+    if (!(gameOpen && overlay.style.display === 'flex')) { updateDust(dt, now); updateDisco(dt, now); }
     if (mapOverlay.style.display === 'flex') updateMapPlayer();
 
     // While a game fills the screen the 3D scene is completely hidden behind
@@ -4695,6 +5044,142 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   if (window.visualViewport) window.visualViewport.addEventListener('resize', refreshFullscreenBtn);
   refreshFullscreenBtn();
 
+  // ---- graphics quality: AUTO drops to LOW by itself if the frame rate stays poor ----
+  let qualitySetting = 'auto';
+  try { const q = localStorage.getItem('neonArcade.quality'); if (q === 'low' || q === 'high' || q === 'auto') qualitySetting = q; } catch(e){}
+  let lowQuality = (qualitySetting === 'low');
+  const qualitySwitch = document.getElementById('quality-switch');
+  function applyQuality(){
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowQuality ? 1 : (isMobile ? 1.5 : 2)));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    dust.visible = !lowQuality;
+    ATTRACT_N = lowQuality ? 1 : (isMobile ? 2 : 3);
+    ATTRACT_MS = lowQuality ? 140 : (isMobile ? 100 : 80);
+  }
+  function updateQualityUI(){
+    qualitySwitch.querySelectorAll('button[data-q]').forEach(b => b.classList.toggle('active', b.dataset.q === qualitySetting));
+  }
+  qualitySwitch.querySelectorAll('button[data-q]').forEach(b => b.addEventListener('click', () => {
+    qualitySetting = b.dataset.q;
+    lowQuality = (qualitySetting === 'low');
+    try { localStorage.setItem('neonArcade.quality', qualitySetting); } catch(e){}
+    fpsWarm = 4; fpsAcc = 0; fpsN = 0;
+    applyQuality(); updateQualityUI(); AudioEngine.click();
+  }));
+  applyQuality();
+  updateQualityUI();
+
+  // ---- confetti + the cheat code ----
+  function confettiBurst(){
+    if (reduceMotion) return;
+    const c = document.createElement('canvas');
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    c.style.cssText = 'position:fixed;inset:0;z-index:90;pointer-events:none;';
+    document.body.appendChild(c);
+    const g = c.getContext('2d');
+    const cols = ['#ff2bd6', '#22e0ff', '#ffe600', '#39ff14', '#b060e0', '#ff8a20'];
+    const parts = [];
+    for (let i = 0; i < 140; i++) parts.push({ x: c.width / 2 + (Math.random() - 0.5) * 120, y: c.height * 0.55,
+      vx: (Math.random() - 0.5) * 14, vy: -6 - Math.random() * 12, s: 5 + Math.random() * 6, col: cols[i % cols.length], r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4 });
+    const t0 = performance.now();
+    (function step(now){
+      const t = now - t0;
+      g.clearRect(0, 0, c.width, c.height);
+      parts.forEach(p => {
+        p.vy += 0.35; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.r += p.vr;
+        g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.col; g.globalAlpha = Math.max(0, 1 - t / 2600);
+        g.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); g.restore();
+      });
+      if (t < 2600) requestAnimationFrame(step); else c.remove();
+    })(t0);
+  }
+  const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+  let konamiPos = 0;
+  function feedKonami(k){
+    if (k === KONAMI[konamiPos] || k.toLowerCase() === KONAMI[konamiPos]) konamiPos++;
+    else konamiPos = (k === KONAMI[0]) ? 1 : 0;
+    if (konamiPos === KONAMI.length) { konamiPos = 0; runKonami(); }
+  }
+  function runKonami(){
+    confettiBurst();
+    AudioEngine.coin();
+    if (!achFlags.konami) {
+      achFlags.konami = true; saveAchievements();
+      addTickets(30);
+      showToast('CHEAT CODE! +30 TICKETS', '#ff2bd6', 2800);
+      checkAchievements();
+    } else {
+      showToast('NICE. YOU ALREADY KNOW THIS ONE', '#ff2bd6', 2000);
+    }
+  }
+
+  // ---- photo mode: saves a PNG of the 3D scene (no buttons or menus in the shot) ----
+  function takePhoto(){
+    if (gameOpen) return;
+    renderer.render(scene, camera);
+    let url = '';
+    try { url = renderer.domElement.toDataURL('image/png'); }
+    catch(e) { showToast('PHOTO FAILED', '#ff3b5c', 1800); return; }
+    const a = document.createElement('a');
+    a.href = url; a.download = 'arcade-photo.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    AudioEngine.shutter();
+    if (!reduceMotion) {
+      const fl = document.createElement('div');
+      fl.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:89;pointer-events:none;opacity:.8;transition:opacity .35s;';
+      document.body.appendChild(fl);
+      requestAnimationFrame(() => { fl.style.opacity = '0'; });
+      setTimeout(() => fl.remove(), 420);
+    }
+    showToast('PHOTO SAVED', '#f1efe8', 1600);
+  }
+  document.getElementById('photo-btn').addEventListener('click', () => { closeMenus(); setTimeout(takePhoto, 160); });
+
+  // ---- gamepad: stick / d-pad move, A interact & play, B back, X jump, Y floor map ----
+  let gpPrev = [], gpDrove = false, gpRepeatAt = 0;
+  window.addEventListener('gamepadconnected', () => showToast('GAMEPAD CONNECTED', '#22e0ff', 2200));
+  function pollGamepad(now){
+    if (!navigator.getGamepads) return;
+    let gp = null;
+    const pads = navigator.getGamepads();
+    for (let i = 0; i < pads.length; i++) if (pads[i] && pads[i].connected) { gp = pads[i]; break; }
+    if (!gp) return;
+    const btn = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+    // "just pressed" edges are read every frame (even when we then ignore them) so none go stale
+    const edge = i => { const cur = btn(i), was = !!gpPrev[i]; gpPrev[i] = cur; return cur && !was; };
+    const A = edge(0), B = edge(1), X = edge(2), Y = edge(3), UP = edge(12), DOWN = edge(13), LEFT = edge(14), RIGHT = edge(15);
+    const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0, DZ = 0.35;
+    if (gameOpen) return;                        // a running game owns the pad
+    if (anyMenuOpen()) { if (B) closeMenus(); return; }
+    if (phase === PHASE_ROOM && !cameraAnimating) {
+      const dx = (btn(15) ? 1 : 0) - (btn(14) ? 1 : 0) + (Math.abs(ax) > DZ ? ax : 0);
+      const dy = (btn(12) ? 1 : 0) - (btn(13) ? 1 : 0) + (Math.abs(ay) > DZ ? -ay : 0);
+      if (Math.abs(dx) > 0.3 || Math.abs(dy) > 0.3) {
+        moveKeys.d = dx > 0.3; moveKeys.a = dx < -0.3; moveKeys.w = dy > 0.3; moveKeys.s = dy < -0.3;
+        gpDrove = true;
+      } else if (gpDrove) {
+        moveKeys.w = moveKeys.a = moveKeys.s = moveKeys.d = false;
+        gpDrove = false;
+      }
+      if (A) { if (nearCab) travelToCabinet(nearCab); else if (nearPrize) openPrizeCounter(); else tryJump(); }
+      if (X) tryJump();
+      if (Y) openFloorMap(false);
+    } else if (phase === PHASE_ARCADE && activeCab && !cameraAnimating) {
+      let step = 0;
+      if (DOWN) step = 1; else if (UP) step = -1;
+      else if (Math.abs(ay) > 0.6 && now > gpRepeatAt) { step = ay > 0 ? 1 : -1; gpRepeatAt = now + 180; }
+      if (step) {
+        const c = activeCab;
+        c.selected = Math.max(0, Math.min(c.games.length - 1, c.selected + step));
+        AudioEngine.click(); drawMenu(c); saveSession({ phase: PHASE_ARCADE });
+      }
+      if (RIGHT) switchCabinet(1); else if (LEFT) switchCabinet(-1);
+      if (A) launchGame(activeCab, activeCab.selected);
+      if (B) leaveArcadeView();
+      if (Y) openFloorMap(false);
+    }
+  }
+
   // ---- phone MENU button: folds Settings / Stats / Feedback / Floor / Fullscreen away ----
   const menuToggleBtn = document.getElementById('menu-toggle-btn');
   function setMenuOpen(open){
@@ -4738,6 +5223,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       phase === PHASE_ROOM ? roomHintText() : arcadeHintText();
     updateMobileControlsVisibility();
     animate();
+    setTimeout(announceDailyBonus, 1800);   // a moment after the arcade appears
   }
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(reveal).catch(reveal);
