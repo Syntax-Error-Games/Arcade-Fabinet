@@ -1,0 +1,47 @@
+```yaml
+name: 💬 General Feedback
+description: Tell us what you think about Arcade Cabinet.
+title: "[FEEDBACK] "
+labels:
+  - feedback
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 💬 We'd love to hear from you!
+
+        Tell us what you like, what could be improved, or anything else you'd like to share.
+
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Your feedback
+      description: What would you like to tell us?
+      placeholder: I think Arcade Cabinet...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: What is your feedback about?
+      options:
+        - Games
+        - Controls
+        - Graphics
+        - Sound
+        - Mobile experience
+        - Desktop experience
+        - Performance
+        - User interface
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestions
+    attributes:
+      label: Suggestions
+      description: Anything you'd like to see changed or improved?
+      placeholder: It would be cool if...
+```
