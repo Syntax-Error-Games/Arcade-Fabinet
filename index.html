@@ -15,6 +15,11 @@
     --cyan:#22e0ff;
     --phosphor:#39ff14;
     --bg:#0a0612;
+    /* notch / home-indicator insets (all 0px on desktop and non-notched phones) */
+    --sat:env(safe-area-inset-top,0px);
+    --sar:env(safe-area-inset-right,0px);
+    --sab:env(safe-area-inset-bottom,0px);
+    --sal:env(safe-area-inset-left,0px);
   }
   *{box-sizing:border-box;}
   html,body{
@@ -25,6 +30,15 @@
     font-family:'Press Start 2P', monospace;
     overflow:hidden;
   }
+  /* stops iOS double-tap-to-zoom on every button/link without disabling pinch */
+  button,a{touch-action:manipulation;}
+  /* the right-hand button stack is offset by --off: one slot on phones (the
+     MENU button sits on top of it) and one slot while a game is open (the
+     game's own OPEN TAB button sits on top of it) */
+  body{--off:0px;}
+  body.mobile-mode{--off:46px;}
+  body.game-playing{--off:46px;}
+  body.mobile-mode.game-playing{--off:92px;}
 
   /* ---------- fallback list (shown until / unless the 3D scene loads) ---------- */
   #fallback{
@@ -99,7 +113,7 @@
   #crosshair-hint{
     position:fixed;
     left:50%;
-    bottom:24px;
+    bottom:calc(24px + var(--sab));
     transform:translateX(-50%);
     font-size:.55rem;
     color:#8a7fb0;
@@ -130,8 +144,8 @@
   }
   #back-btn{
     position:absolute;
-    top:12px;
-    left:12px;
+    top:calc(12px + var(--sat));
+    left:calc(12px + var(--sal));
     z-index:51;
     font-family:'Press Start 2P', monospace;
     font-size:.45rem;
@@ -150,8 +164,8 @@
 
   #open-tab-btn{
     position:absolute;
-    top:12px;
-    right:12px;
+    top:calc(12px + var(--sat));
+    right:calc(12px + var(--sar));
     z-index:51;
     font-family:'Press Start 2P', monospace;
     font-size:.45rem;
@@ -177,7 +191,7 @@
   #room-prompt{
     position:fixed;
     left:50%;
-    bottom:96px;
+    bottom:calc(96px + var(--sab));
     transform:translateX(-50%);
     z-index:20;
     display:none;
@@ -194,7 +208,7 @@
   #floor-guide{
     position:fixed;
     left:50%;
-    bottom:150px;
+    bottom:calc(150px + var(--sab));
     transform:translateX(-50%);
     z-index:19;
     display:none;
@@ -236,8 +250,8 @@
   /* ---------- mobile touch controls (shown only when isMobile is true) ---------- */
   #move-pad{
     position:fixed;
-    left:26px;
-    bottom:26px;
+    left:calc(26px + var(--sal));
+    bottom:calc(26px + var(--sab));
     width:120px;
     height:120px;
     display:none;
@@ -265,8 +279,8 @@
   }
   #jump-btn{
     position:fixed;
-    right:26px;
-    bottom:26px;
+    right:calc(26px + var(--sar));
+    bottom:calc(26px + var(--sab));
     width:78px;
     height:78px;
     border-radius:50%;
@@ -283,8 +297,8 @@
 
   #arcade-exit-btn{
     position:fixed;
-    left:14px;
-    top:14px;
+    left:calc(14px + var(--sal));
+    top:calc(14px + var(--sat));
     z-index:52;
     display:none;
     font-family:'Press Start 2P', monospace;
@@ -299,21 +313,19 @@
   #arcade-exit-btn:active{ background:rgba(255,43,214,.3); }
 
   #ticket-display{
-    position:fixed; left:50%; top:14px; transform:translateX(-50%); z-index:52;
+    position:fixed; left:50%; top:calc(14px + var(--sat)); transform:translateX(-50%); z-index:52;
     font-family:'Press Start 2P', monospace; font-size:.55rem; color:#ffe600;
     background:rgba(10,6,18,.78); border:2px solid #ffe600; border-radius:4px; padding:6px 10px;
     transition:opacity .25s, top .25s;
   }
   #settings-btn,#leaderboard-btn,#feedback-btn{
-    position:fixed; right:14px; z-index:52;
+    position:fixed; right:calc(14px + var(--sar)); z-index:52;
     font-family:'Press Start 2P', monospace; font-size:.5rem;
     background:rgba(10,6,18,.78); border-radius:4px; padding:8px 10px; cursor:pointer;
     transition:opacity .25s, top .25s, transform .2s;
   }
-  #settings-btn{top:14px;color:var(--cyan);border:2px solid var(--cyan);}
-  #leaderboard-btn{top:60px;color:#ffe600;border:2px solid #ffe600;}
-  body.game-playing #settings-btn{top:60px;}
-  body.game-playing #leaderboard-btn{top:106px;}
+  #settings-btn{top:calc(14px + var(--sat) + var(--off));color:var(--cyan);border:2px solid var(--cyan);}
+  #leaderboard-btn{top:calc(60px + var(--sat) + var(--off));color:#ffe600;border:2px solid #ffe600;}
   body.game-playing #settings-btn,
   body.game-playing #leaderboard-btn,
   body.game-playing #ticket-display{opacity:.22;}
@@ -336,12 +348,14 @@
     font-family:'Press Start 2P', monospace; font-size:.42rem; color:#eae6ff;
   }
   .stat-row .stat-value{ color:#ffe600; flex-shrink:0; }
+  .stat-row.locked{ opacity:.5; }
+  .stat-row.locked .stat-value{ color:#6f668c; }
+  .stat-row .ach-desc{ display:block; margin-top:6px; font:9px/1.4 monospace; color:#6f668c; }
   #leaderboard-close-btn{
     display:block; margin:0 auto; font-family:'Press Start 2P', monospace; font-size:.5rem;
     padding:10px 18px; background:#ffe600; color:#050505; border:none; border-radius:4px; cursor:pointer;
   }
-  #feedback-btn{top:106px;color:#ff8a20;border:2px solid #ff8a20;}
-  body.game-playing #feedback-btn{top:152px;}
+  #feedback-btn{top:calc(106px + var(--sat) + var(--off));color:#ff8a20;border:2px solid #ff8a20;}
   body.game-playing #feedback-btn{opacity:.22;}
   body.game-playing #feedback-btn:hover{opacity:1;}
   #feedback-overlay{position:fixed;inset:0;z-index:65;display:none;align-items:center;justify-content:center;background:rgba(2,2,4,.92);}
@@ -428,13 +442,16 @@
   .toggle-btn{ min-width:68px; padding:8px 7px; font: .34rem 'Press Start 2P',monospace; color:#050505; background:var(--phosphor); border:0; border-radius:3px; cursor:pointer; }
   .toggle-btn.off{ color:#aaa; background:#29232f; border:1px solid #4b4058; }
   .volume-row{ display:flex; align-items:center; justify-content:center; gap:12px; padding:12px 0 4px; }
+  .volume-row.sub-vol{ padding:6px 0 0; }
+  .vol-label{ width:78px; color:#8a7fb0; font-size:.34rem; text-align:left; flex-shrink:0; }
+  .vol-spacer{ width:78px; flex-shrink:0; }
   @media(max-width:560px){ #settings-overlay .panel{padding:14px;} .inventory-layout{grid-template-columns:1fr;} .inventory-preview{position:relative;} #customize-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
   #mute-btn{
     font-family:'Press Start 2P', monospace; font-size:1rem; color:var(--cyan);
-    background:none; border:none; cursor:pointer; line-height:1;
+    background:none; border:none; cursor:pointer; line-height:1; width:78px; flex-shrink:0;
   }
   #mute-btn.muted{ color:#666; }
-  #volume-slider{ width:140px; accent-color:var(--cyan); cursor:pointer; }
+  #volume-slider,#music-slider,#sfx-slider{ width:140px; accent-color:var(--cyan); cursor:pointer; }
   #settings-close-btn{
     display:block; margin:16px auto 0; font-family:'Press Start 2P', monospace; font-size:.5rem;
     padding:10px 18px; background:var(--magenta); color:#050505; border:none; border-radius:4px; cursor:pointer;
@@ -442,16 +459,34 @@
 
   /* ---------- floor map (shows where each cabinet is) ---------- */
   #map-btn{
-    position:fixed; right:14px; top:152px; z-index:52;
+    position:fixed; right:calc(14px + var(--sar)); top:calc(152px + var(--sat) + var(--off)); z-index:52;
     font-family:'Press Start 2P', monospace; font-size:.5rem;
     color:#00e5a0; background:rgba(10,6,18,.78); border:2px solid #00e5a0;
     border-radius:4px; padding:8px 10px; cursor:pointer;
     transition:opacity .25s, top .25s;
   }
-  body.game-playing #map-btn{top:198px;opacity:.22;}
+  body.game-playing #map-btn{opacity:.22;}
   body.game-playing #map-btn:hover{opacity:1;}
   #map-overlay{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;background:rgba(2,2,4,.92);}
-  #map-overlay .panel{background:#0a0612;border:2px solid #00e5a0;box-shadow:0 0 30px rgba(0,229,160,.3);padding:22px;max-width:520px;width:92vw;max-height:88vh;overflow:auto;}
+  #map-overlay .panel{background:#0a0612;border:2px solid #00e5a0;box-shadow:0 0 30px rgba(0,229,160,.3);padding:22px;max-width:660px;width:94vw;max-height:90vh;overflow:auto;}
+  .map-layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:16px;align-items:start;margin-bottom:14px;}
+  #map-plan-wrap{position:sticky;top:0;}
+  #map-plan{width:100%;height:auto;display:block;background:#08040e;border:2px solid #3a2860;border-radius:6px;}
+  .plan-room{fill:#0d0718;stroke:#3a2860;stroke-width:2;}
+  .plan-grid{stroke:#1a0e2e;stroke-width:1;}
+  .plan-door{fill:#00e5a0;fill-opacity:.55;}
+  .plan-label{font:5px 'Press Start 2P',monospace;fill:#6f668c;text-anchor:middle;}
+  .plan-cab{cursor:pointer;outline:none;}
+  .plan-cab .cab-body{fill:var(--c);fill-opacity:.32;stroke:var(--c);stroke-width:1.5;transition:fill-opacity .15s;}
+  .plan-cab .cab-front{stroke:#fff;stroke-width:1.6;stroke-linecap:round;}
+  .plan-cab .cab-num{font:7px 'Press Start 2P',monospace;fill:#fff;stroke:#050505;stroke-width:2px;paint-order:stroke;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+  .plan-cab:hover .cab-body, .plan-cab:focus-visible .cab-body, .plan-cab.hot .cab-body{fill-opacity:.85;}
+  .plan-cab.here .cab-body{fill-opacity:.7;animation:planPulse 1.3s ease-in-out infinite;}
+  @keyframes planPulse{50%{fill-opacity:.3;}}
+  #plan-player{fill:#fff;stroke:#050505;stroke-width:1.2;}
+  #plan-player-ring{fill:none;stroke:#fff;stroke-opacity:.5;stroke-width:1;}
+  @media (prefers-reduced-motion: reduce){ .plan-cab.here .cab-body{animation:none;fill-opacity:.7;} }
+  @media (max-width:560px){ .map-layout{grid-template-columns:1fr;} #map-plan-wrap{position:relative;max-width:260px;margin:0 auto;width:100%;} }
   #map-overlay h2{margin:0 0 6px;color:#00e5a0;font-size:.75rem;text-align:center;text-shadow:0 0 8px #00e5a0;}
   #map-overlay .sub{text-align:center;color:#8a7fb0;font-size:.4rem;margin-bottom:16px;line-height:1.6;}
   #map-list{display:flex;flex-direction:column;gap:9px;margin-bottom:16px;}
@@ -468,6 +503,35 @@
   .map-row .map-count{font:10px monospace;color:#8a7fb0;flex-shrink:0;}
   .map-row .map-where{font:10px monospace;color:#6f668c;flex-shrink:0;min-width:74px;text-align:right;}
   #map-close-btn{display:block;margin:0 auto;font-family:'Press Start 2P',monospace;font-size:.5rem;padding:10px 18px;background:#00e5a0;color:#050505;border:none;border-radius:4px;cursor:pointer;}
+
+  /* ---------- phone MENU button: the five HUD buttons fold behind it ---------- */
+  #menu-toggle-btn{
+    position:fixed; right:calc(14px + var(--sar)); top:calc(14px + var(--sat)); z-index:53;
+    display:none; font-family:'Press Start 2P', monospace; font-size:.5rem;
+    color:#eae6ff; background:rgba(10,6,18,.82); border:2px solid #7a6aa8;
+    border-radius:4px; padding:8px 10px; cursor:pointer;
+    transition:opacity .25s, top .25s;
+  }
+  body.mobile-mode #menu-toggle-btn{ display:block; }
+  body.menu-open #menu-toggle-btn{ color:#ff6a6a; border-color:#ff6a6a; }
+  body.game-playing #menu-toggle-btn{ top:calc(60px + var(--sat)); opacity:.3; }
+  body.game-playing #menu-toggle-btn:hover, body.game-playing.menu-open #menu-toggle-btn{ opacity:1; }
+  body.mobile-mode:not(.menu-open) #settings-btn,
+  body.mobile-mode:not(.menu-open) #leaderboard-btn,
+  body.mobile-mode:not(.menu-open) #feedback-btn,
+  body.mobile-mode:not(.menu-open) #map-btn,
+  body.mobile-mode:not(.menu-open) #fullscreen-btn{ display:none !important; }
+  /* ...but the iPhone "exit immersive" button must always stay reachable */
+  html.ios-immersive body.mobile-mode:not(.menu-open) #fullscreen-btn.is-exit{ display:block !important; }
+
+  /* ---------- portrait-phone hint ---------- */
+  #rotate-tip{
+    display:none; position:fixed; left:50%; top:calc(60px + var(--sat)); transform:translateX(-50%);
+    z-index:53; width:min(88vw,360px); padding:10px 12px; text-align:center;
+    font-size:.45rem; line-height:1.8; color:#eae6ff; background:rgba(10,6,18,.92);
+    border:2px solid #ffe600; border-radius:4px; box-shadow:0 0 16px rgba(255,230,0,.25);
+  }
+  #rotate-tip span{ display:block; margin-top:4px; color:#8a7fb0; font-size:.38rem; }
 
   /* ---------- mobile Safari toolbar tip ---------- */
 #safari-toolbar-tip{
@@ -491,6 +555,7 @@
   box-shadow:0 4px 18px rgba(0,0,0,.45);
 }
 html.ios-safari-tip #safari-toolbar-tip{display:block;}
+html.ios-safari-tip.tip-hidden #safari-toolbar-tip{display:none;}
 html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-bottom));}
 @supports not (height:100dvh){
   html.ios-safari-tip #fullscreen-btn{bottom:86px;}
@@ -498,14 +563,14 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 
 /* ---------- fullscreen / iPhone immersive fallback ---------- */
   #fullscreen-btn{
-    position:fixed; right:14px; top:198px; z-index:52;
+    position:fixed; right:calc(14px + var(--sar)); top:calc(198px + var(--sat) + var(--off)); z-index:52;
     font-family:'Press Start 2P', monospace; font-size:.5rem;
     color:#eae6ff; background:rgba(10,6,18,.78); border:2px solid #7a6aa8;
     border-radius:4px; padding:8px 10px; cursor:pointer;
     transition:opacity .25s, top .25s;
   }
   #fullscreen-btn:hover{ border-color:#eae6ff; }
-  body.game-playing #fullscreen-btn{ top:244px; opacity:.22; }
+  body.game-playing #fullscreen-btn{ opacity:.22; }
   body.game-playing #fullscreen-btn:hover{ opacity:1; }
   body.is-fullscreen:not(.mobile-mode) #fullscreen-btn{ display:none !important; }
   #fullscreen-btn.is-exit{ color:#ff6a6a; border-color:#ff6a6a; }
@@ -552,7 +617,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 
   /* ---------- embedded-copy notice ---------- */
   #embed-banner{
-    position:fixed; left:14px; top:14px; z-index:55;
+    position:fixed; left:calc(14px + var(--sal)); top:calc(14px + var(--sat)); z-index:55;
     display:none; align-items:center; gap:10px; max-width:min(420px,72vw);
     padding:9px 11px; border:2px solid #ffe600; border-radius:4px;
     background:rgba(10,6,18,.9); box-shadow:0 0 14px rgba(255,230,0,.25);
@@ -572,7 +637,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   }
   #embed-dismiss:hover{ color:#eae6ff; }
   /* keep the mobile arcade exit button clear of the banner */
-  body.embedded #arcade-exit-btn{ top:78px; }
+  body.embedded #arcade-exit-btn{ top:calc(78px + var(--sat)); }
   /* a game overlay puts its own BACK button top-left, so stand the banner down */
   body.embedded.game-playing #embed-banner{ display:none; }
   @media (max-width:600px){
@@ -594,8 +659,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   }
   .cab-nav-btn:hover{ opacity:1; background:rgba(22,11,32,.82); }
   .cab-nav-btn:active{ transform:translateY(-50%) scale(.93); }
-  #cab-prev-btn{ left:14px; }
-  #cab-next-btn{ right:14px; flex-direction:row-reverse; }
+  #cab-prev-btn{ left:calc(14px + var(--sal)); }
+  #cab-next-btn{ right:calc(14px + var(--sar)); flex-direction:row-reverse; }
   .cab-nav-arrow{ font-size:.95rem; flex-shrink:0; }
   .cab-nav-label{ max-width:104px; text-align:left; }
   #cab-next-btn .cab-nav-label{ text-align:right; }
@@ -629,6 +694,10 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     0%{ opacity:.7; }
     100%{ opacity:0; }
   }
+  /* the strobe-like sweep is skipped for people who ask their OS for less motion */
+  @media (prefers-reduced-motion: reduce){
+    #switch-flash, #switch-pulse{ display:none !important; }
+  }
 
 </style>
 </head>
@@ -638,34 +707,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   =====================================================================
   HOW TO ADD MORE GAMES
   =====================================================================
-  Scroll down to the "CABINETS" array near the top of the <script> block
-  below. The arcade is now a room of separate genre cabinets, and each
-  entry in CABINETS is one physical machine:
+  Open  cabinets.js  (it must sit in the same folder as this file) and
+  drop one line into the `games` list of whichever cabinet the game
+  belongs to. Everything else — the 3D room, the floor map, the stats
+  and the plain-text fallback list — reads from that one file.
 
-      {
-        id:'racing', title:'RACING', tagline:'WHEELS & SPEED',
-        accent:0xff2bd6, x:-1.15, z:-5.2, rotY:0,
-        games:[
-        { title: "Mario Kart", file: "https://ubghyper.github.io/GameList.github.io/MarioKart/" },
-        { title: "Polytrack", file: "https://ubghyper.github.io/GameList.github.io/Polytrack-New/" },
-        { title: "Drive Mad", file: "https://ubghyper.github.io/GameList.github.io/Drive-Mad/" },
-        { title: "Drift Boss", file: "https://ubghyper.github.io/GameList.github.io/Drift-Boss/" },
-        { title: "MotoX3M", file: "https://ubghyper.github.io/GameList.github.io/Moto3XM/" },
-        { title: "Jelly Drift", file: "https://ubghyper.github.io/GameList.github.io/Jelly-Drift/" },
-        { title: "Mario Kart Snow", file: "games/mario-kart-snow/index.html" }
-      ]
-      },
-
-  To add a game, drop one line into the `games` list of whichever
-  cabinet it belongs to. To add a whole new genre, copy a cabinet block,
-  give it a fresh id/title/accent and a free x/z slot on the floor.
-
-  Add `pinBottom: true` to a game (like Credits) to keep it glued to the
-  end of its own cabinet's list no matter where you insert it.
-
-  The 3D room, the floor map, and the plain-text fallback list all read
-  from this single array, so nothing else needs to change, and each CRT
-  menu scrolls automatically once a cabinet holds more games than fit.
+  Upload BOTH files: index.html and cabinets.js.
   =====================================================================
 -->
 
@@ -702,10 +749,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 <button id="arcade-exit-btn">&uarr; EXIT</button>
 
 <div id="ticket-display">&#127883; 0</div>
+<button id="menu-toggle-btn">&#9776; MENU</button>
 <button id="settings-btn">&#9881; SETTINGS</button>
 <button id="leaderboard-btn">&#127942; STATS</button>
 <button id="feedback-btn">&#128172; FEEDBACK</button>
 <button id="map-btn">&#128506; FLOOR</button>
+<div id="rotate-tip" role="status">BEST IN LANDSCAPE<span>rotate your phone for more room &bull; tap to dismiss</span></div>
 <div id="safari-toolbar-tip" role="status">
   <b>SAFARI TIP</b><br>
   To hide Safari's toolbar, tap the <b>page settings icon (aA)</b>
@@ -757,7 +806,10 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   <div class="panel">
     <h2>ARCADE FLOOR</h2>
     <div class="sub" id="map-sub">TAP A CABINET TO WARP TO IT</div>
-    <div id="map-list"></div>
+    <div class="map-layout">
+      <div id="map-plan-wrap"></div>
+      <div id="map-list"></div>
+    </div>
     <button id="map-close-btn">CLOSE</button>
   </div>
 </div>
@@ -789,7 +841,15 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     <div class="settings-section-title">AUDIO</div>
     <div class="volume-row">
       <button id="mute-btn">&#128266;</button>
-      <input type="range" id="volume-slider" min="0" max="100" value="55">
+      <input type="range" id="volume-slider" min="0" max="100" value="55" aria-label="master volume">
+    </div>
+    <div class="volume-row sub-vol">
+      <span class="vol-label">MUSIC</span>
+      <input type="range" id="music-slider" min="0" max="100" value="100" aria-label="music volume">
+    </div>
+    <div class="volume-row sub-vol">
+      <span class="vol-label">EFFECTS</span>
+      <input type="range" id="sfx-slider" min="0" max="100" value="100" aria-label="effects and cabinet hum volume">
     </div>
     <div class="settings-section-title">ADVANCED</div>
     <div class="settings-row">
@@ -855,170 +915,26 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 <div id="game-overlay">
   <button id="back-btn">&larr; BACK</button>
   <a id="open-tab-btn" href="#" target="_blank" rel="noopener">OPEN TAB &nearr;</a>
-  <iframe id="game-frame" src="about:blank" title="game"></iframe>
+  <iframe id="game-frame" src="about:blank" title="game" allow="fullscreen; autoplay; gamepad; clipboard-write" allowfullscreen></iframe>
 </div>
 
+<script src="cabinets.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
 <script>
 (function(){
 
-  // =====================================================================
-  // CABINETS — one physical machine per genre. Add / remove games inside
-  // a cabinet's `games` list, or copy a whole block to add a new genre.
-  // Everything else (3D room, floor map, fallback menu) adapts automatically.
-  //
-  //   x / z  = where the cabinet stands on the floor
-  //   rotY   = which way it faces (0 = toward you, +PI/2 = toward +x)
-  //   accent = its trim, marquee and CRT text color
-  //
-  // The five machines below share the back wall (z=-5.2) and are spaced
-  // evenly along it; the remaining four line the left/right walls. Cycling
-  // (nav buttons / arrow keys / joystick swipe) follows this array order,
-  // walking the room's perimeter in one direction — see the note further
-  // down where the wall cabinets begin.
-  // =====================================================================
-  const CABINETS = [
-    {
-      id:'arcade', title:'ARCADE', tagline:'PIXEL PERFECT CLASSICS',
-      accent:0xffe600, x:-4.6, z:-5.2, rotY:0, where:'BACK WALL',
-      games:[
-        { title: "Asteroids", file: "games/asteroids/index.html" },
-        { title: "Breakout", file: "games/breakout/index.html" },
-        { title: "Centipede", file: "games/centipede/index.html" },
-        { title: "Computer Space", file: "games/computer-space/index.html" },
-        { title: "Defender", file: "games/defender/index.html" },
-        { title: "Galaxian", file: "games/galaxian/index.html" },
-        { title: "Gun Fight", file: "games/gun-fight/index.html" },
-        { title: "Lunar Lander", file: "games/lunar-lander/index.html" },
-        { title: "Missile Command", file: "games/missile-command/index.html" },
-        { title: "Pac-Man", file: "games/pac-man/index.html" },
-        { title: "Pong", file: "games/pong/index.html" },
-        { title: "Space Invaders", file: "games/space-invaders/index.html" }
-      ]
-    },
-    {
-      id:'action', title:'ACTION', tagline:'RUN AND GUN',
-      accent:0xff5a1f, x:-2.3, z:-5.2, rotY:0, where:'BACK WALL',
-      games:[
-        { title: "Ultrakill", file: "https://ubghyper.github.io/GameList.github.io/Ultrakill/" },
-        { title: "Nightfall", file: "games/nightfall-fps.html" },
-        { title: "Jetpack Joyride", file: "https://emulatoros.github.io/gfile/jetpackjoyride/" },
-        { title: "Neon Chamber", file: "games/NeonChamber.html" },
-        { title: "Doodle Shooter", file: "https://dbestvarun.github.io/doodle-game/" },
-        { title: "Shooter Game", file: "games/ShooterGame.html" },
-        { title: "Tomb of the Mask", file: "https://ubghyper.github.io/GameList.github.io/Tomb-of-the-Mask/" },
-        { title: "Stickman Hook", file: "https://ubghyper.github.io/GameList.github.io/Stickman-Hook/" }
-      ]
-    },
-    {
-      id:'racing', title:'RACING', tagline:'WHEELS AND SPEED',
-      accent:0xff2bd6, x:0, z:-5.2, rotY:0, where:'BACK WALL',
-      games:[
-        { title: "Mario Kart",        file: "https://ubghyper.github.io/GameList.github.io/MarioKart/" },
-        { title: "Turbo Kart",        file: "https://bridge-mind.github.io/turbo-kart-rush/" },
-        { title: "Rocket Arena",        file: "games/rocket-arena-3v3.html" },
-        { title: "Apex Formula",        file: "https://bridge-mind.github.io/apex-formula/" },
-        { title: "Mario Kart",        file: "https://ubghyper.github.io/GameList.github.io/MarioKart/" },
-        { title: "Polytrack",         file: "https://ubghyper.github.io/GameList.github.io/Polytrack-New/" },
-        { title: "Drive Mad",         file: "https://anonymousbirb5100.github.io/drive-mad/" },
-        { title: "Drift Boss",        file: "https://ubghyper.github.io/GameList.github.io/Drift-Boss/" },
-        { title: "MotoX3M",           file: "https://ubghyper.github.io/GameList.github.io/Moto3XM/" },
-        { title: "Jelly Drift",       file: "https://ubghyper.github.io/GameList.github.io/Jelly-Drift/" },
-      ]
-    },
-    {
-      id:'adventure', title:'ADVENTURE', tagline:'JUMP AND EXPLORE',
-      accent:0x39ff14, x:2.3, z:-5.2, rotY:0, where:'BACK WALL',
-      games:[
-        { title: "Hollow Knight", file: "https://ubghyper.github.io/GameList.github.io/hollowknight/" },
-        { title: "Deepest Sword", file: "https://mathv2official.github.io/projects/deepestsword/index.html" },
-        { title: "Pokemon Clone", file: "https://syntax-error-games.github.io/2026Q1_Fakemon/" },
-        { title: "Level Devil", file: "https://ubghyper.github.io/GameList.github.io/Level-Devil/" },
-        { title: "Platformer", file: "games/Platformer.html" },
-        { title: "Crossy Farm", file: "games/crossy-farm-car/index.html" },
-        { title: "Flappy Bird", file: "games/flappy-bird/index.html" },
-        { title: "Mario 1-1", file: "games/mario-1-1/index.html" },
-        { title: "Subway Runner", file: "games/subway-runner/index.html" }
-      ]
-    },
-    {
-      id:'sandbox', title:'SANDBOX', tagline:'BUILD ANYTHING',
-      accent:0x22e0ff, x:4.6, z:-5.2, rotY:0, where:'BACK WALL',
-      games:[
-        { title: "Minecraft", file: "https://ubghyper.github.io/GameList.github.io/Eaglercraft/" },
-        { title: "Voxelcraft", file: "games/voxelcraft.html" },
-        { title: "Terraria", file: "https://ubghyper.github.io/GameList.github.io/Terraria/" },
-        { title: "Sandvoxels", file: "https://freeonlinewebtools.github.io/UnblockedGamesUltra.github.io/" },
-        { title: "Townscaper", file: "https://ubghyper.github.io/GameList.github.io/Townscaper/" },
-        { title: "Gravity Simulator", file: "games/GravitySim.html" },
-        { title: "Terraria Sandbox", file: "games/terraria-sandbox/index.html" },
-        { title: "Voxel GTA City", file: "games/voxel-gta-city/index.html" },
-        { title: "GTA6 Leonida City", file: "games/GTA6-Leonida.html" }
-      ]
-    },
-    // The next four machines continue the loop around the room's perimeter —
-    // right wall back-to-front, then a single hop across the open front of
-    // the room, then left wall front-to-back — rather than jumping corner to
-    // corner. Cycling with the nav buttons / arrow keys / joystick swipe
-    // follows this exact array order.
-    {
-      id:'toybox', title:'TOY BOX', tagline:'ODDS AND ENDS',
-      accent:0xb060e0, x:5.3, z:-2.4, rotY:-Math.PI/2, where:'RIGHT WALL',
-      games:[
-        { title: "Open in About Blank", file: "games/AboutBlank.html" },
-        { title: "Cookie Clicker", file: "https://ozh.github.io/cookieclicker/" },
-        { title: "Clicker Game", file: "games/ClickerGame.html" },
-        { title: "Name Generator", file: "games/NameGenerator.html" },
-        { title: "Die Roller", file: "games/DiceRoller.html" },
-        { title: "Robot Tennis", file: "games/robot-tennis/index.html" }
-      ]
-    },
-    {
-      id:'portals', title:'PORTALS', tagline:'LINKS OUT',
-      accent:0x00e5a0, x:5.3, z:0.2, rotY:-Math.PI/2, where:'RIGHT WALL',
-      games:[
-        { title: "Seraph", file: "https://crimsondev1.github.io/seraph/games/index.html" },
-        { title: "Math V2", file: "https://mathv2official.github.io/projects.html" },
-        { title: "UGBhyper", file: "https://ubghyper.github.io/index.html" },
-        { title: "Quenq", file: "https://quenq.com" },
-        { title: "Jadson's Site", file: "https://sites.google.com/stu.sandi.net/vip/home?pli=1&authuser=5" },
-        { title: "Credits", file: "games/Credits.html" }
-      ]
-    },
-    {
-      id:'creative', title:'CREATIVE', tagline:'MAKE SOMETHING',
-      accent:0xffe600, x:-5.3, z:0.2, rotY:Math.PI/2, where:'LEFT WALL',
-      games:[
-        { title: "MS Paint", file: "games/Paint.html" },
-        { title: "Piano", file: "games/Piano.html" },
-        { title: "Synth", file: "games/synth-keyboard.html" },
-        { title: "Music Player", file: "games/MusicPlayer.html" },
-        { title: "Windows 95", file: "games/Win95.html" },
-        { title: "Window Rain", file: "games/windowrain.html" },
-        { title: "LED Matrix", file: "games/LEDmatrix.html" },
-        { title: "Live Transit Map", file: "games/transitmap.html" },
-        { title: "Cyber Terminal", file: "games/cyberterminal.html" },
-        { title: "Terminal", file: "games/Terminal.html" }
-      ]
-    },
-    {
-      id:'horror', title:'HORROR', tagline:'LIGHTS OUT',
-      accent:0xff1744, x:-5.3, z:-2.4, rotY:Math.PI/2, where:'LEFT WALL',
-      games:[
-        { title: "Buckshot Roulette", file: "https://ubghyper.github.io/GameList.github.io/Buckshot-Roulete/" },
-        { title: "MiSide", file: "https://ubghyper.github.io/GameList.github.io/Unity-Web-Player-MiSide/" },
-        { title: "Pinehollow Funland", file: "games/pinehollow-funland-standalone.html" },
-        { title: "R.E.P.O.", file: "https://ubghyper.github.io/GameList.github.io/Repo/" },
-        { title: "Five Nights at Epst", file: "https://ubghyper.github.io/GameList.github.io/FNAE/" }
-      ]
-    },
-  ];
-
+  // The game library lives in cabinets.js (loaded before this script).
   // Games flagged pinBottom:true always sort to the very end of their own
-  // cabinet, no matter where you insert them above — so "Credits" (or
-  // anything else you flag the same way) never has to be typed last to stay last.
+  // cabinet, no matter where you insert them — so "Credits" never has to be
+  // typed last to stay last.
+  const CABINETS = window.ARCADE_CABINETS;
+  if (!Array.isArray(CABINETS) || !CABINETS.length) {
+    document.querySelector('#fallback .hint').textContent =
+      'cabinets.js is missing or has an error — make sure it sits next to index.html';
+    return;
+  }
   CABINETS.forEach(def => {
     const pinned = [];
     for (let i = def.games.length - 1; i >= 0; i--) {
@@ -1051,6 +967,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       const a = document.createElement('a');
       a.className = 'game-link';
       a.href = g.file;
+      if (g.external) { a.target = '_blank'; a.rel = 'noopener'; }
       a.textContent = g.title;
       li.appendChild(a);
       ul.appendChild(li);
@@ -1087,6 +1004,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     else if(savedControlMode === 'computer') isMobile = false;
   } catch(e) {}
 
+  // honour the OS "reduce motion" setting (the CSS side hides the flash overlay)
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
   function setControlMode(mode){
     isMobile = mode === 'mobile';
     try { localStorage.setItem('neonArcade.controlMode', isMobile ? 'mobile' : 'computer'); } catch(e) {}
@@ -1104,14 +1024,29 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   // audio files to host/load). Browsers require a user gesture before
   // any audio can play, so nothing actually makes sound until unlock()
   // runs on the first click/tap/keypress (see near the bottom of the file).
+  //
+  // Three levels: MASTER (+ mute), MUSIC (the chiptune loops) and EFFECTS
+  // (blips, footsteps, and the quiet cabinet hum). While a game is open the
+  // music and hum are ducked to silence so they never fight the game's own
+  // audio, and the whole context is suspended when the tab is hidden.
   // =====================================================================
   const AudioEngine = (function(){
-    let ctx = null, masterGain = null, musicGain = null, sfxGain = null;
-    let muted = false, volume = 0.55;
+    let ctx = null, masterGain = null, musicGain = null, sfxGain = null, humGain = null;
+    let muted = false, volume = 0.55, musicVol = 1, sfxVol = 1;
+    let ducked = false, humWanted = false;
+    const MUSIC_BASE = 0.32, SFX_BASE = 0.85, HUM_BASE = 0.04;
     try { muted = localStorage.getItem('neonArcade.muted') === '1'; } catch(e){}
     try {
       const v = parseFloat(localStorage.getItem('neonArcade.volume'));
       if (!isNaN(v)) volume = Math.max(0, Math.min(1, v));
+    } catch(e){}
+    try {
+      const v = parseFloat(localStorage.getItem('neonArcade.musicVol'));
+      if (!isNaN(v)) musicVol = Math.max(0, Math.min(1, v));
+    } catch(e){}
+    try {
+      const v = parseFloat(localStorage.getItem('neonArcade.sfxVol'));
+      if (!isNaN(v)) sfxVol = Math.max(0, Math.min(1, v));
     } catch(e){}
 
     function ensureCtx(){
@@ -1123,11 +1058,20 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       masterGain.gain.value = muted ? 0 : volume;
       masterGain.connect(ctx.destination);
       musicGain = ctx.createGain();
-      musicGain.gain.value = 0.32;
+      musicGain.gain.value = MUSIC_BASE * musicVol * (ducked ? 0 : 1);
       musicGain.connect(masterGain);
       sfxGain = ctx.createGain();
-      sfxGain.gain.value = 0.85;
+      sfxGain.gain.value = SFX_BASE * sfxVol;
       sfxGain.connect(masterGain);
+    }
+
+    // push the current music / effects / hum levels into the audio graph
+    function applyLevels(){
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      musicGain.gain.setTargetAtTime(MUSIC_BASE * musicVol * (ducked ? 0 : 1), t, 0.12);
+      sfxGain.gain.setTargetAtTime(SFX_BASE * sfxVol, t, 0.05);
+      if (humGain) humGain.gain.setTargetAtTime((humWanted && !ducked) ? HUM_BASE * sfxVol : 0, t, 0.4);
     }
 
     // a short synthesized blip/tone
@@ -1169,6 +1113,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     function click(){ tone(880, 0.05, 'square', sfxGain, 0.18, 0); }
     function launchSfx(){ tone(523.25, 0.1, 'square', sfxGain, 0.28, 0); tone(783.99, 0.14, 'square', sfxGain, 0.28, 0.09); }
     function whoosh(){ noiseBurst(0.35, 700, sfxGain, 0.14); }
+    // classic two-note coin "ka-ching" plus a tiny metallic tick, played when a game launches
+    function coin(){
+      noiseBurst(0.05, 3200, sfxGain, 0.08);
+      tone(988, 0.07, 'square', sfxGain, 0.2, 0.02);
+      tone(1319, 0.3, 'square', sfxGain, 0.2, 0.09);
+    }
     // a quick rising three-note sweep plus a short bright noise tail — used
     // when swooping from one cabinet to the next, so it reads as "zipping
     // past" rather than the plainer whoosh used for sitting down/standing up
@@ -1193,6 +1143,29 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       osc.start(t0); osc.stop(t0 + 0.55);
     }
     function errorSfx(){ tone(180, 0.14, 'sawtooth', sfxGain, 0.22, 0); tone(120, 0.18, 'sawtooth', sfxGain, 0.2, 0.06); }
+
+    // ---- cabinet hum: a faint, constant electrical drone (mains hum plus
+    // two harmonics so small speakers can actually reproduce it). It fades
+    // in once the arcade powers on and follows the EFFECTS slider. ----
+    function startHum(){
+      if (!ctx || humGain) return;
+      humGain = ctx.createGain();
+      humGain.gain.value = 0;
+      humGain.connect(masterGain);
+      [[60, 'sine', 1.0], [120, 'sine', 0.55], [180, 'triangle', 0.22]].forEach(p => {
+        const o = ctx.createOscillator();
+        o.type = p[1];
+        o.frequency.value = p[0];
+        const g = ctx.createGain();
+        g.gain.value = p[2];
+        o.connect(g); g.connect(humGain);
+        o.start();
+      });
+    }
+    function setHum(on){
+      humWanted = !!on;
+      if (ctx) { if (humWanted) startHum(); applyLevels(); }
+    }
 
     // ---- background music: an actual little composed loop (melody + bass).
     // The room has one mellow pattern; each cabinet gets its own key and
@@ -1232,7 +1205,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     let musicTimer = null;
 
     function scheduleStep(){
-      if (ctx && !muted) {
+      // only schedule notes while the context is actually running — otherwise
+      // (tab hidden / suspended) they would all pile up and fire at once on resume
+      if (ctx && ctx.state === 'running' && !muted && !ducked) {
         const note = currentMelody[stepIndex % currentMelody.length];
         if (note) tone(note, STEP_SEC * 0.9, 'triangle', musicGain, 0.11, 0);
         const bnote = currentBass[stepIndex % currentBass.length];
@@ -1254,6 +1229,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       stepIndex = 0; // restart the pattern cleanly on a mood change
     }
 
+    // silence music + hum while a game is running (and bring them back after)
+    function duckMusic(on){
+      ducked = !!on;
+      applyLevels();
+    }
+
     function setMuted(m){
       muted = m;
       try { localStorage.setItem('neonArcade.muted', m ? '1' : '0'); } catch(e){}
@@ -1268,22 +1249,44 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     }
     function getVolume(){ return volume; }
 
+    function setMusicVolume(v){
+      musicVol = Math.max(0, Math.min(1, v));
+      try { localStorage.setItem('neonArcade.musicVol', String(musicVol)); } catch(e){}
+      applyLevels();
+    }
+    function getMusicVolume(){ return musicVol; }
+    function setSfxVolume(v){
+      sfxVol = Math.max(0, Math.min(1, v));
+      try { localStorage.setItem('neonArcade.sfxVol', String(sfxVol)); } catch(e){}
+      applyLevels();
+    }
+    function getSfxVolume(){ return sfxVol; }
+
     let unlocked = false;
     function unlock(){
       if (unlocked) return;
       unlocked = true;
       ensureCtx();
       if (ctx && ctx.state === 'suspended') ctx.resume();
+      if (ctx && humWanted) startHum();
+      applyLevels();
       startMusic();
     }
 
-    return { footstep, jump: jumpSfx, land, click, launch: launchSfx, whoosh, dash, powerOn, error: errorSfx, setMood,
-             setMuted, isMuted, setVolume, getVolume, unlock };
+    // hidden tab => stop the audio clock entirely; visible again => carry on
+    function suspend(){ if (ctx && ctx.state === 'running') { try { ctx.suspend(); } catch(e){} } }
+    function resume(){ if (ctx && unlocked && ctx.state !== 'running') { try { ctx.resume(); } catch(e){} } }
+
+    return { footstep, jump: jumpSfx, land, click, launch: launchSfx, whoosh, coin, dash, powerOn, error: errorSfx, setMood,
+             setMuted, isMuted, setVolume, getVolume, setMusicVolume, getMusicVolume, setSfxVolume, getSfxVolume,
+             duckMusic, setHum, suspend, resume, unlock };
   })();
 
   const appEl = document.getElementById('app');
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // phones have very dense screens; capping the pixel ratio there is the
+  // cheapest big GPU saving there is
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputEncoding = THREE.sRGBEncoding;
   // without this, the browser treats a finger-drag on the canvas as a page
@@ -1332,6 +1335,19 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   magentaLight.position.set(-3.6,2.2,-1.5); scene.add(magentaLight);
   const cyanLight = new THREE.PointLight(0x22e0ff,0,9);
   cyanLight.position.set(3.6,2.2,-1.5); scene.add(cyanLight);
+
+  // Cabinet glow. Nine separate point lights (one per machine) made every
+  // lit material in the scene pay for 13 lights, which is heavy on phones.
+  // Instead a small FIXED pool of lights is moved onto whichever machines are
+  // closest each frame (see animate). The pool size never changes, so three.js
+  // never has to recompile its shaders.
+  const GLOW_POOL_SIZE = 3;
+  const glowPool = [];
+  for (let i = 0; i < GLOW_POOL_SIZE; i++) {
+    const l = new THREE.PointLight(0xffffff, 0, 3.0);
+    scene.add(l);
+    glowPool.push(l);
+  }
 
   // =====================================================================
   // Room: floor (neon grid), walls, ceiling
@@ -1429,21 +1445,93 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   roomGlow.position.set(0, 3.0, -3.0);
   scene.add(roomGlow);
 
+  // Small canvas textures (signs, cabinet details) are registered here so
+  // they can all be redrawn together — mobile Safari sometimes throws away
+  // the pixels of canvases that aren't on the page, and web fonts load late.
+  const staticRedraws = [];
+  function makeCanvasTex(w, h, draw){
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    const tex = new THREE.CanvasTexture(c);
+    const redraw = () => { x.clearRect(0, 0, w, h); draw(x, w, h); tex.needsUpdate = true; };
+    redraw();
+    staticRedraws.push(redraw);
+    return tex;
+  }
+
+  // Everything that glows when the arcade "powers on" is kept in this list, so
+  // switching the lighting never needs to walk the whole scene.
+  const arcadeStrips = [];
+  function addNeon(w, h, d, x, y, z, color, onIntensity){
+    const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0 });
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    mesh.position.set(x, y, z);
+    mesh.userData.onI = onIntensity || 0.8;
+    scene.add(mesh);
+    arcadeStrips.push(mesh);
+    return mesh;
+  }
+
   // thin neon strips along the walls for atmosphere
-  const stripGeo = new THREE.BoxGeometry(0.06, 5, 0.06);
   function addStrip(x, z, colorIndex){
-    const stripMat = new THREE.MeshStandardMaterial({
-      color: colorIndex % 2 ? 0x22e0ff : 0xff2bd6,
-      emissive: colorIndex % 2 ? 0x22e0ff : 0xff2bd6,
-      emissiveIntensity: 0
-    });
-    const strip = new THREE.Mesh(stripGeo, stripMat);
-    strip.userData.arcadeStrip = true;
-    strip.position.set(x, 2.6, z);
-    scene.add(strip);
+    addNeon(0.06, 5, 0.06, x, 2.6, z, colorIndex % 2 ? 0x22e0ff : 0xff2bd6, 0.8);
   }
   [-5.75, -2.875, 0, 2.875, 5.75].forEach((x, i) => addStrip(x, -7.35, i));
   [-5.0, -1.0, 3.0, 6.4].forEach((z, i) => { addStrip(-6.35, z, i); addStrip(6.35, z, i + 1); });
+
+  // horizontal neon tubes running around the top of the hall, above the machines
+  addNeon(12.6, 0.05, 0.05, 0, 3.35, -7.38, 0xff2bd6, 1.0);
+  addNeon(12.6, 0.05, 0.05, 0, 3.15, -7.38, 0x22e0ff, 1.0);
+  addNeon(0.05, 0.05, 14.4, -6.38, 3.25, 0, 0x22e0ff, 1.0);
+  addNeon(0.05, 0.05, 14.4,  6.38, 3.25, 0, 0xff2bd6, 1.0);
+
+  // the big back-wall neon sign (emissive-only, so it costs no extra lights)
+  const signTexture = makeCanvasTex(1024, 300, (g, w, h) => {
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = "120px 'Press Start 2P', monospace";
+    g.shadowColor = '#ff2bd6'; g.shadowBlur = 40; g.fillStyle = '#ffd3f6';
+    g.fillText('ARCADE', w / 2, 118);
+    g.shadowBlur = 26; g.shadowColor = '#ff2bd6'; g.fillText('ARCADE', w / 2, 118);
+    g.shadowColor = '#22e0ff'; g.shadowBlur = 22; g.fillStyle = '#aef4ff';
+    g.font = "34px 'Press Start 2P', monospace";
+    g.fillText('PRESS START', w / 2, 236);
+  });
+  const signMat = new THREE.MeshBasicMaterial({ map: signTexture, transparent: true, opacity: 0.14, depthWrite: false });
+  const neonSign = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.64), signMat);
+  neonSign.position.set(0, 4.75, -7.42);
+  scene.add(neonSign);
+  let signFlickerUntil = 0, signNextFlicker = 3000;
+
+  // slow-drifting dust motes catching the neon light — one draw call
+  const DUST_COUNT = isMobile ? 50 : 110;
+  const dustPositions = new Float32Array(DUST_COUNT * 3);
+  const dustSeeds = new Float32Array(DUST_COUNT);
+  for (let i = 0; i < DUST_COUNT; i++) {
+    dustPositions[i*3]   = (Math.random() - 0.5) * 11;
+    dustPositions[i*3+1] = 0.3 + Math.random() * 4.4;
+    dustPositions[i*3+2] = (Math.random() - 0.5) * 12.5;
+    dustSeeds[i] = Math.random();
+  }
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+  const dustMat = new THREE.PointsMaterial({
+    color: 0xb9a8ff, size: 0.04, transparent: true, opacity: 0.25,
+    depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
+  });
+  const dust = new THREE.Points(dustGeo, dustMat);
+  dust.frustumCulled = false;
+  scene.add(dust);
+  function updateDust(dt, t){
+    if (reduceMotion) return;
+    for (let i = 0; i < DUST_COUNT; i++) {
+      const s = dustSeeds[i];
+      dustPositions[i*3+1] += dt * (0.035 + s * 0.06);
+      dustPositions[i*3]   += Math.sin(t * 0.0004 + s * 40) * dt * 0.05;
+      if (dustPositions[i*3+1] > 4.8) dustPositions[i*3+1] = 0.25;
+    }
+    dustGeo.attributes.position.needsUpdate = true;
+  }
 
   // =====================================================================
   // Arcade cabinets — one per genre, built from the CABINETS array above
@@ -1454,6 +1542,51 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   const cabinetGroups = [];
   const interactiveObjects = [];
   let blinkOn = true;
+
+  // Shared detail textures — drawn once, reused by all nine cabinets.
+  const CAB_TEX = {
+    // speaker grille: dark plate with horizontal slots
+    grille: makeCanvasTex(128, 96, (g, w, h) => {
+      g.fillStyle = '#0c0716'; g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#3a2860'; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, h - 4);
+      for (let y = 12; y < h - 8; y += 9) {
+        g.fillStyle = '#020105'; g.fillRect(12, y, w - 24, 4);
+        g.fillStyle = '#2a1f45'; g.fillRect(12, y + 4, w - 24, 1);
+      }
+    }),
+    // coin door: two lit coin wells, an INSERT COIN label and a return flap
+    coinDoor: makeCanvasTex(128, 96, (g, w, h) => {
+      g.fillStyle = '#1a1226'; g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#5a4a86'; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, h - 4);
+      [[26, 20], [74, 20]].forEach(p => {
+        g.fillStyle = '#050208'; g.fillRect(p[0], p[1], 28, 32);
+        g.strokeStyle = '#ffb020'; g.lineWidth = 2; g.strokeRect(p[0], p[1], 28, 32);
+        g.fillStyle = '#ffb020'; g.fillRect(p[0] + 12, p[1] + 6, 4, 18);
+      });
+      g.fillStyle = '#ffb020'; g.font = "7px 'Press Start 2P', monospace"; g.textAlign = 'center';
+      g.fillText('INSERT COIN', w / 2, 62);
+      g.fillStyle = '#0a0612'; g.fillRect(34, 69, 60, 18);
+      g.strokeStyle = '#3a2860'; g.lineWidth = 2; g.strokeRect(34, 69, 60, 18);
+    }),
+    // CRT glass: darkened rim, a soft diagonal streak and a hot-spot reflection
+    glass: makeCanvasTex(256, 192, (g, w, h) => {
+      const v = g.createRadialGradient(w / 2, h / 2, h * 0.35, w / 2, h / 2, h * 0.85);
+      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.38)');
+      g.fillStyle = v; g.fillRect(0, 0, w, h);
+      const s = g.createLinearGradient(0, 0, w * 0.7, h * 0.9);
+      s.addColorStop(0, 'rgba(255,255,255,0.13)'); s.addColorStop(0.35, 'rgba(255,255,255,0.04)'); s.addColorStop(0.55, 'rgba(255,255,255,0)');
+      g.fillStyle = s; g.fillRect(0, 0, w, h);
+      const hs = g.createRadialGradient(w * 0.16, h * 0.16, 0, w * 0.16, h * 0.16, w * 0.12);
+      hs.addColorStop(0, 'rgba(255,255,255,0.22)'); hs.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = hs; g.fillRect(0, 0, w, h);
+    }),
+    // soft round glow, tinted per cabinet and laid on the floor in front of it
+    glow: makeCanvasTex(128, 128, (g, w, h) => {
+      const r = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+      r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.5, 'rgba(255,255,255,0.35)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = r; g.fillRect(0, 0, w, h);
+    }),
+  };
 
   function buildCabinet(def){
     const group = new THREE.Group();
@@ -1502,10 +1635,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     }
     drawMarqueeTexture();
     const marqueeTexture = new THREE.CanvasTexture(marqueeCanvas);
-    const marquee = new THREE.Mesh(
-      new THREE.BoxGeometry(1.35, 0.34, 0.16),
-      new THREE.MeshBasicMaterial({ map: marqueeTexture, transparent:true, opacity:1 })
-    );
+    const marqueeMat = new THREE.MeshBasicMaterial({ map: marqueeTexture, transparent:true, opacity:1 });
+    const marquee = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.34, 0.16), marqueeMat);
     marquee.position.set(0, 1.98, 0.02);
     marquee.rotation.x = -0.12;
     group.add(marquee);
@@ -1530,9 +1661,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     screenMesh.rotation.x = -0.06;
     group.add(screenMesh);
 
-    const screenGlow = new THREE.PointLight(accent, 0.55, 3.0);
-    screenGlow.position.set(0, 1.49, 0.9);
-    group.add(screenGlow);
+    // where this machine's screen glow comes from. The light itself lives in
+    // the shared glowPool and is moved here each frame when this cabinet is
+    // one of the nearest few (see animate()).
+    const glowAnchor = new THREE.Object3D();
+    glowAnchor.position.set(0, 1.49, 0.9);
+    group.add(glowAnchor);
 
     // ---- control panel: a tilted shelf whose whole surface faces the
     // player, carrying a draggable joystick (drag up/down = browse) and
@@ -1578,12 +1712,48 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       buttons.push(btn);
     });
 
+    // ---- extra cabinet detail (all emissive/unlit — no extra lights) ----
+    // CRT glass sitting a hair in front of the screen
+    const glass = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.88, 0.66),
+      new THREE.MeshBasicMaterial({ map: CAB_TEX.glass, transparent: true, depthWrite: false })
+    );
+    glass.position.set(0, 1.49, 0.479);
+    glass.rotation.x = -0.06;
+    group.add(glass);
+
+    // lower front: speaker grille on the left, coin door on the right
+    const grille = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), new THREE.MeshBasicMaterial({ map: CAB_TEX.grille }));
+    grille.position.set(-0.3, 0.6, 0.452);
+    group.add(grille);
+    const coinDoor = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), new THREE.MeshBasicMaterial({ map: CAB_TEX.coinDoor }));
+    coinDoor.position.set(0.3, 0.6, 0.452);
+    group.add(coinDoor);
+    // amber glow over the coin wells — blinks while idle, flashes when a game launches
+    const coinLightMat = new THREE.MeshBasicMaterial({ color: 0xffb020, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false });
+    const coinLight = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.11), coinLightMat);
+    coinLight.position.set(0.3, 0.6375, 0.455);
+    group.add(coinLight);
+
+    // coloured pool of light on the floor in front of the machine
+    const floorGlowMat = new THREE.MeshBasicMaterial({ map: CAB_TEX.glow, color: accent, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
+    const floorGlow = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 2.3), floorGlowMat);
+    floorGlow.rotation.x = -Math.PI / 2;
+    floorGlow.position.set(0, 0.004, 0.55);
+    group.add(floorGlow);
+
     const cab = {
       def, id:def.id, title:def.title, accent, group, games:def.games,
       selected:0, scrollOffset:0,
-      screenCanvas, sctx, screenTexture, screenMesh, screenGlow,
+      screenCanvas, sctx, screenTexture, screenMesh, glowAnchor,
       marqueeTexture, drawMarqueeTexture,
-      stickTilt, stickGrabZone, buttons, trimMat
+      stickTilt, stickGrabZone, buttons, trimMat,
+      marqueeMat, coinLightMat, floorGlowMat,
+      phaseOff: Math.random() * 6.28,          // desynchronises the blinking between machines
+      nextFlicker: 1500 + Math.random() * 6000, flickerUntil: 0,
+      coinFlashUntil: 0,                       // performance.now() until which the coin slot flashes
+      bootStart: -1e9,                         // CRT turn-on animation start time
+      staticUntil: 0, lastSel: -1              // brief screen static when the highlighted game changes
     };
 
     // tag every piece so a raycast hit can say which machine it belongs to
@@ -1644,6 +1814,14 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       let label = cursor + g.title;
       if (label.length > 28) label = label.slice(0, 27) + '\u2026';
       sctx.fillText(label, 40, y);
+      if (g.external) {
+        // tiny tag: this one opens in a new browser tab
+        sctx.save();
+        sctx.font = "8px 'Press Start 2P', monospace";
+        sctx.textAlign = 'right'; sctx.shadowBlur = 0;
+        sctx.fillText('NEW TAB', SCREEN_W - 36, y - 2);
+        sctx.restore();
+      }
     });
 
     if (cab.scrollOffset > 0) {
@@ -1661,7 +1839,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     sctx.shadowBlur = blinkOn ? 10 : 0;
     sctx.fillStyle = blinkOn ? bright : mixHex(cab.accent, 0.2);
     sctx.font = "13px 'Press Start 2P', monospace";
-    sctx.fillText('PRESS ENTER TO PLAY', SCREEN_W / 2, SCREEN_H - 18);
+    sctx.fillText(cab === activeCab ? (isMobile ? 'TAP A GAME TO PLAY' : 'PRESS ENTER TO PLAY') : 'INSERT COIN', SCREEN_W / 2, SCREEN_H - 18);
 
     // scanlines
     sctx.shadowBlur = 0;
@@ -1674,6 +1852,33 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     vg.addColorStop(1, 'rgba(0,0,0,0.55)');
     sctx.fillStyle = vg;
     sctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+
+    // ---- CRT effects: static burst when the highlighted game changes, and a
+    // turn-on wipe (thin bright line stretching to fill the tube) when you sit down ----
+    const nowT = performance.now();
+    if (cab.lastSel !== cab.selected) {
+      if (cab.lastSel !== -1 && cab === activeCab && !reduceMotion) cab.staticUntil = nowT + 150;
+      cab.lastSel = cab.selected;
+    }
+    if (nowT < cab.staticUntil) {
+      for (let i = 0; i < 220; i++) {
+        sctx.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.45) + ')';
+        sctx.fillRect(Math.random() * SCREEN_W, Math.random() * SCREEN_H, 8 + Math.random() * 60, 1 + Math.random() * 3);
+      }
+    }
+    const bootP = (nowT - cab.bootStart) / 480;
+    if (cab === activeCab && bootP >= 0 && bootP < 1 && !reduceMotion) {
+      const e = 1 - Math.pow(1 - bootP, 3);
+      const half = Math.max(2, e * SCREEN_H / 2);
+      sctx.fillStyle = '#000';
+      sctx.fillRect(0, 0, SCREEN_W, SCREEN_H / 2 - half);
+      sctx.fillRect(0, SCREEN_H / 2 + half, SCREEN_W, SCREEN_H / 2 - half);
+      sctx.fillStyle = 'rgba(255,255,255,' + (0.9 * (1 - bootP)) + ')';
+      sctx.fillRect(0, SCREEN_H / 2 - half - 1, SCREEN_W, 2);
+      sctx.fillRect(0, SCREEN_H / 2 + half - 1, SCREEN_W, 2);
+      sctx.fillStyle = 'rgba(255,255,255,' + (0.22 * (1 - bootP)) + ')';
+      sctx.fillRect(0, SCREEN_H / 2 - half, SCREEN_W, half * 2);
+    }
 
     cab.screenTexture.needsUpdate = true;
   }
@@ -1700,7 +1905,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   function roomHintText(){
     return isMobile
       ? 'drag the left pad to move &nbsp;&bull;&nbsp; JUMP to jump<br>walk up to any cabinet and tap it'
-      : 'WASD &bull; move &nbsp;&bull;&nbsp; mouse &bull; look around<br>walk up to any cabinet to play its genre';
+      : 'WASD &bull; move &nbsp;&bull;&nbsp; mouse &bull; look around &nbsp;&bull;&nbsp; M &bull; floor map<br>walk up to any cabinet to play its genre';
   }
   function arcadeHintText(){
     const name = activeCab ? activeCab.title : 'ARCADE';
@@ -1749,6 +1954,18 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   try { equippedCosmetic = localStorage.getItem('neonArcade.equippedCosmetic') || 'none'; } catch(e){}
   if (!Array.isArray(ownedCosmetics) || ownedCosmetics.indexOf('none') === -1) ownedCosmetics = ['none'];
 
+  // achievements state lives up here (next to the other saved values) so any
+  // function below can safely touch it; the achievement list itself is further down
+  let ticketsEarned = 0, achUnlocked = [], achFlags = {};
+  try {
+    const te = localStorage.getItem('neonArcade.ticketsEarned');
+    ticketsEarned = te === null ? tickets : (parseInt(te, 10) || 0); // existing players start from what they already hold
+  } catch(e){}
+  try { achUnlocked = JSON.parse(localStorage.getItem('neonArcade.achievements') || '[]'); } catch(e){}
+  try { achFlags = JSON.parse(localStorage.getItem('neonArcade.achFlags') || '{}'); } catch(e){}
+  if (!Array.isArray(achUnlocked)) achUnlocked = [];
+  if (!achFlags || typeof achFlags !== 'object') achFlags = {};
+
   const playerCosmeticGroup = new THREE.Group();
   player.add(playerCosmeticGroup);
 
@@ -1758,7 +1975,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     if (adminMode) { refreshTicketDisplay(); return; }
     tickets = Math.max(0, tickets + n);
     try { localStorage.setItem('neonArcade.tickets', String(tickets)); } catch(e){}
+    if (n > 0) {
+      ticketsEarned += n;
+      try { localStorage.setItem('neonArcade.ticketsEarned', String(ticketsEarned)); } catch(e){}
+    }
     refreshTicketDisplay();
+    if (n > 0) checkAchievements();
   }
 
   function applySkin(id){
@@ -1776,6 +1998,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     try { localStorage.setItem('neonArcade.equippedSkin', id); } catch(e){}
     applySkin(id);
     renderCustomizeMenu();
+    checkAchievements();
   }
   function buySkin(id){
     const skin = SKIN_OPTIONS.find(s => s.id === id);
@@ -1784,17 +2007,20 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     ownedSkins.push(id);
     try { localStorage.setItem('neonArcade.ownedSkins', JSON.stringify(ownedSkins)); } catch(e){}
     equipSkin(id);
+    checkAchievements();
   }
-  function clearCosmetics(){
-    while(playerCosmeticGroup.children.length){
-      const o=playerCosmeticGroup.children.pop();
+  function disposeGroupChildren(group){
+    while(group.children.length){
+      const o=group.children.pop();
       o.traverse?.(n=>{ if(n.geometry) n.geometry.dispose(); if(n.material) n.material.dispose(); });
     }
   }
-  function buildPlayerCosmetic(id){
-    clearCosmetics();
+  function clearCosmetics(){ disposeGroupChildren(playerCosmeticGroup); }
+
+  // Builds one accessory into any group. The in-room character and the
+  // Settings preview both call this, so they always look identical.
+  function buildCosmeticInto(group, id){
     if(id==='none') return;
-    const group=playerCosmeticGroup;
     const dark=new THREE.MeshStandardMaterial({color:0x11131a,metalness:.55,roughness:.25});
     const accent=new THREE.MeshStandardMaterial({color:0x22e0ff,metalness:.45,roughness:.18,emissive:0x05242a,emissiveIntensity:.28});
     const gold=new THREE.MeshStandardMaterial({color:0xffd700,metalness:.95,roughness:.08,emissive:0x3b2400,emissiveIntensity:.18});
@@ -1853,8 +2079,13 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       const knot=new THREE.Mesh(new THREE.BoxGeometry(.045,.055,.04),bowMat); knot.position.set(0,1.08,.15); group.add(knot);
     }
   }
-  function equipCosmetic(id){ if(!adminMode && ownedCosmetics.indexOf(id)===-1) return; equippedCosmetic=id; try{localStorage.setItem('neonArcade.equippedCosmetic',id)}catch(e){} buildPlayerCosmetic(id); renderCustomizeMenu(); }
-  function buyCosmetic(id){ const c=COSMETIC_OPTIONS.find(x=>x.id===id); if(!c||ownedCosmetics.includes(id)||(!adminMode&&tickets<c.cost)) return; if(!adminMode) addTickets(-c.cost); ownedCosmetics.push(id); try{localStorage.setItem('neonArcade.ownedCosmetics',JSON.stringify(ownedCosmetics))}catch(e){} equipCosmetic(id); }
+  function buildPlayerCosmetic(id){
+    clearCosmetics();
+    buildCosmeticInto(playerCosmeticGroup, id);
+    if (typeof miniPreview !== 'undefined') miniPreview.setCosmetic(id);
+  }
+  function equipCosmetic(id){ if(!adminMode && ownedCosmetics.indexOf(id)===-1) return; equippedCosmetic=id; try{localStorage.setItem('neonArcade.equippedCosmetic',id)}catch(e){} buildPlayerCosmetic(id); renderCustomizeMenu(); checkAchievements(); }
+  function buyCosmetic(id){ const c=COSMETIC_OPTIONS.find(x=>x.id===id); if(!c||ownedCosmetics.includes(id)||(!adminMode&&tickets<c.cost)) return; if(!adminMode) addTickets(-c.cost); ownedCosmetics.push(id); try{localStorage.setItem('neonArcade.ownedCosmetics',JSON.stringify(ownedCosmetics))}catch(e){} equipCosmetic(id); checkAchievements(); }
 
   playerMat.color.set((SKIN_OPTIONS.find(s => s.id === equippedSkin) || SKIN_OPTIONS[0]).color);
   refreshTicketDisplay();
@@ -1876,6 +2107,11 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   try { totalPlaySeconds = Number(localStorage.getItem('neonArcade.totalPlaySeconds')) || 0; } catch(e){}
   let playStartedAt = null;
   let currentGame = null;
+  let sessions = 0; // how many times the arcade has been opened on this browser
+  try {
+    sessions = (parseInt(localStorage.getItem('neonArcade.sessions'), 10) || 0) + 1;
+    localStorage.setItem('neonArcade.sessions', String(sessions));
+  } catch(e){}
 
   function saveLeaderboardData(){
     try {
@@ -1886,16 +2122,75 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     } catch(e){}
   }
 
+  // ---------------------------------------------------------------------
+  // Achievements — all stored locally, unlocked by things you already do.
+  // To add one, append an entry: id must be unique, check() returns true
+  // once it's earned. Everything else (toast, stats list) is automatic.
+  // ---------------------------------------------------------------------
+  // Stats, first-play tickets and achievements are keyed by a game's `id`
+  // (set it in cabinets.js) and fall back to its title, so existing saves keep
+  // working and renaming a game later doesn't wipe anyone's history.
+  function gameKey(g){ return g.id || g.title; }
+  const GAME_LABELS = {};
+  CABINETS.forEach(c => c.games.forEach(g => { GAME_LABELS[gameKey(g)] = g.title; }));
+  function gameLabel(key){ return GAME_LABELS[key] || key; }
+  const ALL_GAME_KEYS = Object.keys(GAME_LABELS);
+  const ACHIEVEMENTS = [
+    { id:'first_token',  name:'FIRST TOKEN',    desc:'PLAY YOUR FIRST GAME',
+      check:() => totalLaunches >= 1 },
+    { id:'hopper',       name:'CABINET HOPPER', desc:'PLAY A GAME ON EVERY CABINET',
+      check:() => CABINETS.every(c => (cabinetStats[c.title] || 0) > 0) },
+    { id:'night_owl',    name:'NIGHT OWL',      desc:'PLAY BETWEEN MIDNIGHT AND 5AM',
+      check:() => !!achFlags.night },
+    { id:'tickets_100',  name:'100 TICKETS',    desc:'EARN 100 TICKETS IN TOTAL',
+      check:() => ticketsEarned >= 100 },
+    { id:'completionist',name:'COMPLETIONIST',  desc:'PLAY EVERY GAME AT LEAST ONCE',
+      check:() => ALL_GAME_KEYS.every(k => playedGames.indexOf(k) !== -1) },
+    { id:'shopper',      name:'SHOPPER',        desc:'BUY A SUIT OR ACCESSORY',
+      check:() => ownedSkins.length > 1 || ownedCosmetics.length > 1 },
+    { id:'marathon',     name:'MARATHON',       desc:'SPEND AN HOUR INSIDE GAMES',
+      check:() => (totalPlaySeconds + (playStartedAt ? (Date.now() - playStartedAt) / 1000 : 0)) >= 3600 },
+    { id:'fashionista',  name:'FASHIONISTA',    desc:'WEAR A SUIT AND AN ACCESSORY AT ONCE',
+      check:() => equippedSkin !== 'grey' && equippedCosmetic !== 'none' },
+    { id:'warp_drive',   name:'WARP DRIVE',     desc:'WARP TO A CABINET FROM THE FLOOR MAP',
+      check:() => !!achFlags.warp },
+  ];
+  function saveAchievements(){
+    try {
+      localStorage.setItem('neonArcade.achievements', JSON.stringify(achUnlocked));
+      localStorage.setItem('neonArcade.achFlags', JSON.stringify(achFlags));
+    } catch(e){}
+  }
+  function checkAchievements(){
+    let n = 0;
+    ACHIEVEMENTS.forEach(a => {
+      if (achUnlocked.indexOf(a.id) !== -1) return;
+      let ok = false;
+      try { ok = !!a.check(); } catch(e){}
+      if (!ok) return;
+      achUnlocked.push(a.id);
+      // stagger if several unlock at once so the toasts don't stack on top of each other
+      setTimeout(() => { showToast('ACHIEVEMENT: ' + a.name, '#ffe600', 2800); AudioEngine.launch(); }, n * 750);
+      n++;
+    });
+    if (n) saveAchievements();
+  }
+
   function recordGamePlayed(cab, game){
     if (!game) return;
-    gameStats[game.title] = (Number(gameStats[game.title]) || 0) + 1;
+    const key = gameKey(game);
+    gameStats[key] = (Number(gameStats[key]) || 0) + 1;
     cabinetStats[cab.title] = (Number(cabinetStats[cab.title]) || 0) + 1;
     totalLaunches++;
+    if (new Date().getHours() < 5) achFlags.night = true;
     saveLeaderboardData();
-    if (playedGames.indexOf(game.title) !== -1) return;
-    playedGames.push(game.title);
-    try { localStorage.setItem('neonArcade.playedGames', JSON.stringify(playedGames)); } catch(e){}
-    addTickets(3);
+    if (playedGames.indexOf(key) === -1) {
+      playedGames.push(key);
+      try { localStorage.setItem('neonArcade.playedGames', JSON.stringify(playedGames)); } catch(e){}
+      addTickets(3);
+    }
+    saveAchievements();
+    checkAchievements();
   }
 
   const settingsBtn = document.getElementById('settings-btn');
@@ -1928,12 +2223,26 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     const armGeo2 = new THREE.BoxGeometry(.09,.40,.12); armGeo2.translate(0,-.20,0);
     const aL = new THREE.Mesh(armGeo2, mat2); aL.position.set(-.205,1.33,0); grp.add(aL);
     const aR = new THREE.Mesh(armGeo2.clone(), mat2); aR.position.set(.205,1.33,0); grp.add(aR);
+    // the equipped accessory sits in its own group so it can be swapped out
+    const cosmeticGrp = new THREE.Group();
+    grp.add(cosmeticGrp);
     grp.position.y = -1.0;
     s2.add(grp);
 
-    function loop(){ requestAnimationFrame(loop); grp.rotation.y += 0.015; r2.render(s2, c2); }
+    // only draw while the Settings panel is actually open — this preview has
+    // its own WebGL context and used to burn GPU time every frame regardless
+    function loop(){
+      requestAnimationFrame(loop);
+      if (settingsOverlay.style.display !== 'flex') return;
+      grp.rotation.y += 0.015;
+      r2.render(s2, c2);
+    }
     loop();
-    return { setColor(hex){ mat2.color.set(hex); }, setMaterial(skin){ mat2.color.set(skin.color); mat2.metalness=skin.metalness??0.05; mat2.roughness=skin.roughness??0.8; mat2.emissive.set(skin.emissive||0); mat2.emissiveIntensity=skin.emissiveIntensity||0; } };
+    return {
+      setColor(hex){ mat2.color.set(hex); },
+      setMaterial(skin){ mat2.color.set(skin.color); mat2.metalness=skin.metalness??0.05; mat2.roughness=skin.roughness??0.8; mat2.emissive.set(skin.emissive||0); mat2.emissiveIntensity=skin.emissiveIntensity||0; },
+      setCosmetic(id){ disposeGroupChildren(cosmeticGrp); buildCosmeticInto(cosmeticGrp, id); }
+    };
   })();
 
   applySkin(equippedSkin);
@@ -1990,46 +2299,116 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   const mapOverlay = document.getElementById('map-overlay');
   const mapList = document.getElementById('map-list');
   const mapSub = document.getElementById('map-sub');
+  // top-down plan: 16px per metre, room centred in a 228x260 box
+  const PLAN_S = 16, PLAN_CX = 114, PLAN_CY = 130;
+  function planX(x){ return PLAN_CX + x * PLAN_S; }
+  function planZ(z){ return PLAN_CY + z * PLAN_S; }
+  const mapPlanWrap = document.getElementById('map-plan-wrap');
+
+  function warpTo(cab){
+    mapOverlay.style.display = 'none';
+    AudioEngine.click();
+    travelToCabinet(cab);
+    // only counts if the trip actually started (it's refused while a game is open)
+    if (phase === PHASE_ARCADE && activeCab === cab) {
+      achFlags.warp = true;
+      saveAchievements();
+      checkAchievements();
+    }
+  }
+
   function renderFloorMap(){
     mapSub.textContent = cabinets.length + ' CABINETS \u2022 TAP ONE TO WARP THERE';
+
+    let svg = '<svg id="map-plan" viewBox="0 0 228 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="floor plan of the arcade">';
+    svg += '<rect class="plan-room" x="10" y="10" width="208" height="240" rx="3"/>';
+    for (let g = -6; g <= 6; g += 2) {
+      svg += '<line class="plan-grid" x1="' + planX(g) + '" y1="12" x2="' + planX(g) + '" y2="248"/>';
+      svg += '<line class="plan-grid" x1="12" y1="' + planZ(g) + '" x2="216" y2="' + planZ(g) + '"/>';
+    }
+    svg += '<rect class="plan-door" x="100" y="247" width="28" height="4"/>';
+    svg += '<text class="plan-label" x="114" y="262">ENTRANCE</text>';
+    cabinets.forEach((cab, i) => {
+      const cx = planX(cab.group.position.x), cz = planZ(cab.group.position.z);
+      const deg = -(cab.def.rotY || 0) * 180 / Math.PI; // SVG rotates clockwise, three.js counter-clockwise
+      svg += '<g class="plan-cab' + (cab === activeCab ? ' here' : '') + '" data-i="' + i + '" role="button" tabindex="0"' +
+             ' aria-label="warp to ' + cab.title + '" style="--c:' + hexStr(cab.accent) + '" transform="translate(' + cx + ' ' + cz + ')">' +
+             '<g transform="rotate(' + deg + ')">' +
+             '<rect x="-17" y="-14" width="34" height="28" fill="transparent"/>' +   // generous tap target
+             '<rect class="cab-body" x="-12" y="-8.4" width="24" height="16.8" rx="2"/>' +
+             '<line class="cab-front" x1="-9" y1="8.4" x2="9" y2="8.4"/>' +           // the side the screen faces
+             '</g><text class="cab-num" x="0" y="0.5">' + (i + 1) + '</text></g>';
+    });
+    svg += '<circle id="plan-player-ring" r="7"/><circle id="plan-player" r="3.4"/></svg>';
+    mapPlanWrap.innerHTML = svg;
+
     mapList.innerHTML = '';
-    cabinets.forEach(cab => {
+    cabinets.forEach((cab, i) => {
       const row = document.createElement('div');
       row.className = 'map-row';
       row.setAttribute('role', 'button');
       row.tabIndex = 0;
       row.style.setProperty('--row-accent', hexStr(cab.accent));
-      row.innerHTML = `<span class="map-name">${cab.title}</span>` +
+      row.innerHTML = `<span class="map-name">${i + 1}. ${cab.title}</span>` +
                       `<span class="map-count">${cab.games.length} games</span>` +
                       `<span class="map-where">${cab.def.where}</span>`;
-      const go = () => {
-        mapOverlay.style.display = 'none';
-        AudioEngine.click();
-        travelToCabinet(cab);
-      };
-      row.addEventListener('click', go);
+      const planEl = mapPlanWrap.querySelector('.plan-cab[data-i="' + i + '"]');
+      row.addEventListener('click', () => warpTo(cab));
       row.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); warpTo(cab); }
       });
+      // hovering a row lights up its cabinet on the plan
+      row.addEventListener('mouseenter', () => planEl && planEl.classList.add('hot'));
+      row.addEventListener('mouseleave', () => planEl && planEl.classList.remove('hot'));
       mapList.appendChild(row);
     });
+    mapPlanWrap.querySelectorAll('.plan-cab').forEach(el => {
+      const cab = cabinets[+el.dataset.i];
+      el.addEventListener('click', () => warpTo(cab));
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); warpTo(cab); }
+      });
+    });
+    updateMapPlayer();
   }
-  document.getElementById('map-btn').addEventListener('click', () => {
+
+  // "you are here" dot — follows the player while walking, or sits in front of the machine you're at
+  function updateMapPlayer(){
+    const dot = document.getElementById('plan-player'), ring = document.getElementById('plan-player-ring');
+    if (!dot || !ring) return;
+    let x = player.position.x, z = player.position.z;
+    if (activeCab && phase !== PHASE_ROOM) {
+      const r = activeCab.def.rotY || 0;
+      x = activeCab.group.position.x + Math.sin(r) * 0.95;
+      z = activeCab.group.position.z + Math.cos(r) * 0.95;
+    }
+    const px = planX(x), pz = planZ(z);
+    dot.setAttribute('cx', px); dot.setAttribute('cy', pz);
+    ring.setAttribute('cx', px); ring.setAttribute('cy', pz);
+  }
+
+  function openFloorMap(){
+    closeMenus();
     renderFloorMap();
     mapOverlay.style.display = 'flex';
     AudioEngine.click();
-  });
+  }
+  document.getElementById('map-btn').addEventListener('click', openFloorMap);
   document.getElementById('map-close-btn').addEventListener('click', () => { mapOverlay.style.display = 'none'; });
   mapOverlay.addEventListener('click', e => { if (e.target === mapOverlay) mapOverlay.style.display = 'none'; });
 
-  // small transient message, used by the admin export button
-  function showToast(msg){
+  // small transient message (admin export button, achievement unlocks).
+  // Several can be on screen at once — each one sits above the previous.
+  function showToast(msg, color, ms){
     const el = document.createElement('div');
+    el.className = 'arcade-toast';
     el.textContent = msg;
-    el.style.cssText = "position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:90;" +
-      "font:10px 'Press Start 2P',monospace;color:#050505;background:#39ff14;padding:11px 15px;border-radius:4px;";
+    const offset = 64 + document.querySelectorAll('.arcade-toast').length * 46;
+    el.style.cssText = "position:fixed;left:50%;bottom:" + offset + "px;transform:translateX(-50%);z-index:95;" +
+      "font:10px 'Press Start 2P',monospace;color:#050505;background:" + (color || '#39ff14') + ";padding:11px 15px;border-radius:4px;" +
+      "max-width:92vw;text-align:center;line-height:1.5;pointer-events:none;";
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1800);
+    setTimeout(() => el.remove(), ms || 1800);
   }
 
   // ---------------------------------------------------------------------
@@ -2237,24 +2616,53 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   const leaderboardOverlay = document.getElementById('leaderboard-overlay');
   const leaderboardList = document.getElementById('leaderboard-list');
 
+  // Scores reported by games via postMessage are stored as
+  // "neonArcade.<game title>.__score" — collect them for the stats screen.
+  function readBestScores(){
+    const out = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.indexOf('neonArcade.') === 0 && k.slice(-8) === '.__score') {
+          const v = Number(localStorage.getItem(k));
+          if (Number.isFinite(v) && v > 0) out.push([k.slice(11, -8), v]);
+        }
+      }
+    } catch(e){}
+    return out.sort((a,b) => b[1] - a[1]).slice(0, 6);
+  }
+
   function renderLeaderboard(){
     const rankedGames = Object.entries(gameStats).sort((a,b) => b[1] - a[1]).slice(0,6);
     const rankedCabs = Object.entries(cabinetStats).sort((a,b) => b[1] - a[1]).slice(0,4);
+    const bestScores = readBestScores();
 
     const playTime = totalPlaySeconds + (playStartedAt ? (Date.now() - playStartedAt) / 1000 : 0);
     const minutes = Math.floor(playTime / 60);
+    const cabsVisited = CABINETS.filter(c => (cabinetStats[c.title] || 0) > 0).length;
     leaderboardList.innerHTML = `
+      <div class="stat-row"><span>VISITS</span><span class="stat-value">${sessions}</span></div>
       <div class="stat-row"><span>GAMES PLAYED</span><span class="stat-value">${totalLaunches}</span></div>
       <div class="stat-row"><span>ARCADE TIME</span><span class="stat-value">${minutes}M</span></div>
+      <div class="stat-row"><span>CABINETS PLAYED</span><span class="stat-value">${cabsVisited}/${CABINETS.length}</span></div>
       <div class="stat-row"><span>TICKETS</span><span class="stat-value">${tickets}</span></div>
+      <div class="settings-section-title" style="margin-top:14px">ACHIEVEMENTS ${achUnlocked.length}/${ACHIEVEMENTS.length}</div>
+      ${ACHIEVEMENTS.map(a => {
+        const got = achUnlocked.indexOf(a.id) !== -1;
+        return `<div class="stat-row${got ? '' : ' locked'}"><span>${a.name}<span class="ach-desc">${a.desc}</span></span><span class="stat-value">${got ? 'DONE' : 'LOCKED'}</span></div>`;
+      }).join('')}
       <div class="settings-section-title" style="margin-top:14px">FAVOURITE CABINETS</div>
       ${rankedCabs.length ? rankedCabs.map((x,i) =>
-        `<div class="stat-row"><span>${i+1}. ${x[0]}</span><span class="stat-value">${x[1]}X</span></div>`
+        `<div class="stat-row"><span>${i+1}. ${escapeHtml(x[0])}</span><span class="stat-value">${x[1]}X</span></div>`
       ).join('') : '<div class="sub" style="text-align:center">NO CABINET VISITS YET</div>'}
       <div class="settings-section-title" style="margin-top:14px">MOST PLAYED</div>
       ${rankedGames.length ? rankedGames.map((x,i) =>
-        `<div class="stat-row"><span>${i+1}. ${x[0]}</span><span class="stat-value">${x[1]}X</span></div>`
+        `<div class="stat-row"><span>${i+1}. ${escapeHtml(gameLabel(x[0]))}</span><span class="stat-value">${x[1]}X</span></div>`
       ).join('') : '<div class="sub" style="text-align:center">PLAY A GAME TO START YOUR LEADERBOARD</div>'}
+      <div class="settings-section-title" style="margin-top:14px">BEST SCORES</div>
+      ${bestScores.length ? bestScores.map((x,i) =>
+        `<div class="stat-row"><span>${i+1}. ${escapeHtml(gameLabel(x[0]))}</span><span class="stat-value">${x[1].toLocaleString()}</span></div>`
+      ).join('') : '<div class="sub" style="text-align:center">GAMES THAT REPORT SCORES APPEAR HERE</div>'}
     `;
   }
 
@@ -2272,13 +2680,14 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     settingsOverlay.style.display = 'none';
     leaderboardOverlay.style.display = 'none';
     feedbackOverlay.style.display = 'none';
+    feedbackInboxOverlay.style.display = 'none';
     adminOverlay.style.display = 'none';
     mapOverlay.style.display = 'none';
   }
   function anyMenuOpen(){
     return settingsOverlay.style.display === 'flex' || leaderboardOverlay.style.display === 'flex' ||
-           feedbackOverlay.style.display === 'flex' || adminOverlay.style.display === 'flex' ||
-           mapOverlay.style.display === 'flex';
+           feedbackOverlay.style.display === 'flex' || feedbackInboxOverlay.style.display === 'flex' ||
+           adminOverlay.style.display === 'flex' || mapOverlay.style.display === 'flex';
   }
 
   function tryJump(){
@@ -2391,6 +2800,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     }
 
     updateCabNavButtons();
+    refreshRotateTip();
   }
   function resetPadIfNeeded(){
     moveKeys.w = moveKeys.a = moveKeys.s = moveKeys.d = false;
@@ -2409,6 +2819,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         cabinetId: (extra.cabinetId !== undefined) ? extra.cabinetId : (activeCab ? activeCab.id : null),
         selectedByCabinet,
         player: {x:player.position.x, y:player.position.y, z:player.position.z},
+        rot: player.rotation.y,
         camera: {x:camera.position.x, y:camera.position.y, z:camera.position.z},
         target: {x:controls.target.x, y:controls.target.y, z:controls.target.z},
         preArcadeCamera: preArcadeCameraPos ? {x:preArcadeCameraPos.x, y:preArcadeCameraPos.y, z:preArcadeCameraPos.z} : null,
@@ -2431,19 +2842,16 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     magentaLight.intensity=on?2.2:0;
     cyanLight.intensity=on?2.2:0;
     roomGlow.intensity=on?0.65:0;
-    cabinets.forEach(c => { c.screenGlow.intensity = on ? 1.2 : 0.55; });
-    scene.traverse(obj => {
-      if (obj.userData && obj.userData.arcadeStrip && obj.material) {
-        obj.material.emissiveIntensity=on?0.8:0;
-      }
-    });
+    // (the per-cabinet screen glow is driven by the light pool inside animate())
+    arcadeStrips.forEach(s => { s.material.emissiveIntensity = on ? s.userData.onI : 0; });
   }
 
   function powerOnArcade() {
-    if (arcadePowered) { setRoomLighting(true); return; }
+    if (arcadePowered) return; // already on — this is called every frame while you stand near a machine
     arcadePowered = true;
     setRoomLighting(true);
     AudioEngine.powerOn();
+    AudioEngine.setHum(true);
   }
 
   // which machine you're standing closest to (and close enough to use)
@@ -2472,7 +2880,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         roomPrompt.style.color = hexStr(nearCab.accent);
         roomPrompt.style.textShadow = '0 0 8px ' + hexStr(nearCab.accent);
         roomPrompt.style.borderColor = mixHex(nearCab.accent, 0.55);
-        roomPrompt.innerHTML = 'PLAY THE ' + nearCab.title + ' CABINET<br><span>click it or press ENTER &bull; ' + nearCab.games.length + ' games</span>';
+        roomPrompt.innerHTML = 'PLAY THE ' + nearCab.title + ' CABINET<br><span>' + (isMobile ? 'tap it' : 'click it or press E / ENTER') + ' &bull; ' + nearCab.games.length + ' games</span>';
       }
     }
     if (nearCab) {
@@ -2497,6 +2905,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     // to its neighbour must not overwrite the room camera we'll return to
     const cameFromRoom = (phase === PHASE_ROOM);
     activeCab = cab;
+    cab.bootStart = fromRestore ? -1e9 : performance.now() + 500; // screen powers on as the camera arrives
     phase = PHASE_ARCADE;
     player.visible = false;
     controls.enableZoom = false;
@@ -2645,6 +3054,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     const baseFov = camera.fov;
     const duration = cameFromRoom ? 900 : 780;
     const startTime = performance.now();
+    cab.bootStart = startTime + duration * 0.6;
 
     function step(now){
       const t = Math.min((now - startTime) / duration, 1);
@@ -2662,8 +3072,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         u*u*startTarget.y + 2*u*ease*viaTarget.y + ease*ease*endTarget.y,
         u*u*startTarget.z + 2*u*ease*viaTarget.z + ease*ease*endTarget.z
       );
-      // a brief FOV widen sells the sense of speed through the middle of the arc
-      camera.fov = baseFov + Math.sin(t * Math.PI) * 13;
+      // a brief FOV widen sells the sense of speed through the middle of the
+      // arc (skipped when the OS asks for reduced motion)
+      camera.fov = baseFov + Math.sin(t * Math.PI) * (reduceMotion ? 0 : 13);
       camera.updateProjectionMatrix();
       controls.update();
       if (t < 1) {
@@ -2756,13 +3167,27 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     renderer.domElement.style.cursor = cursor;
   }
 
+  // Redrawing a CRT menu (text, scanlines, vignette) is not free, so mouse
+  // movement only asks for a redraw when the highlighted row actually
+  // changed, and at most once per animation frame.
+  let menuRedrawQueued = false;
+  function queueMenuRedraw(){
+    if (menuRedrawQueued) return;
+    menuRedrawQueued = true;
+    requestAnimationFrame(() => {
+      menuRedrawQueued = false;
+      if (activeCab && phase === PHASE_ARCADE && !gameOpen) drawMenu(activeCab);
+    });
+  }
+
   // Pointer Events (not mouse events) throughout: OrbitControls calls
   // preventDefault() on touchstart for its own touch-orbit handling, which
   // per spec suppresses the browser's synthetic mouse events for that touch.
   renderer.domElement.addEventListener('pointermove', e => {
     if (joystickDragging) return;
+    const prevRow = hoverRow;
     updateHoverFromEvent(e.clientX, e.clientY);
-    if (activeCab) drawMenu(activeCab);
+    if (activeCab && hoverRow !== prevRow) queueMenuRedraw();
   });
 
   // track drag distance so releasing after orbiting the camera doesn't
@@ -2895,6 +3320,10 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   // reliably even when focus changes between the settings overlay and canvas.
   const movementCodes = {KeyW:'w', KeyA:'a', KeyS:'s', KeyD:'d'};
 
+  function isTypingTarget(t){
+    return !!t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || !!t.isContentEditable);
+  }
+
   window.addEventListener('keydown', e => {
     const k = e.key;
     const lower = k.toLowerCase();
@@ -2915,7 +3344,19 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       }
     }
 
+    // While the player is typing (feedback form, sliders) or any menu is up,
+    // the keyboard belongs to that menu: no walking, jumping, or launching a
+    // game behind it, and spaces/letters must reach the text box untouched.
+    if (isTypingTarget(e.target) || anyMenuOpen()) return;
+
     if (cameraAnimating) return;
+
+    // M opens the floor map from anywhere in the arcade (not while a game is running)
+    if (!gameOpen && lower === 'm' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      openFloorMap();
+      e.preventDefault();
+      return;
+    }
 
     if (phase === PHASE_ROOM) {
       if (k === ' ' || e.code === 'Space') {
@@ -2927,7 +3368,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         moveKeys[movementKey] = true;
         e.preventDefault();
       }
-      if (k === 'Enter' && nearCab) {
+      if ((k === 'Enter' || lower === 'e') && nearCab) {
         travelToCabinet(nearCab);
         e.preventDefault();
       }
@@ -2969,7 +3410,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     const movementKey = movementCodes[e.code];
     if (movementKey) {
       moveKeys[movementKey] = false;
-      e.preventDefault();
+      if (!isTypingTarget(e.target)) e.preventDefault();
     }
   });
 
@@ -3030,6 +3471,19 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     if (!cab) return;
     const game = cab.games[index];
     if (!game || gameOpen || cameraAnimating) return;
+
+    // Sites that refuse to be framed (external:true) open in a new tab instead
+    // of showing a blank overlay. This runs synchronously inside the click /
+    // keypress that started it, so pop-up blockers allow it.
+    if (game.external) {
+      AudioEngine.coin();
+      cab.coinFlashUntil = performance.now() + 600;
+      recordGamePlayed(cab, game);
+      showToast('OPENING IN A NEW TAB', '#00e5a0', 1600);
+      window.open(game.file, '_blank', 'noopener');
+      return;
+    }
+
     gameOpen = true;
     phase = PHASE_GAME;
     activeCab = cab;
@@ -3038,7 +3492,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     document.body.classList.add('game-playing');
     closeMenus();
     saveSession({phase:PHASE_GAME, cabinetId:cab.id});
-    AudioEngine.launch();
+    AudioEngine.coin();
+    cab.coinFlashUntil = performance.now() + 600;
+    AudioEngine.duckMusic(true); // the game brings its own sound
     recordGamePlayed(cab, game);
 
     savedCameraPos = camera.position.clone();
@@ -3056,6 +3512,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     animateCameraTo(zoomPos, _worldPos.clone(), 700, () => {
       openTabBtn.href = game.file;
       overlay.style.display = 'flex';
+      // hand keyboard focus to the game so it responds without an extra click
+      try { frame.focus(); } catch(err){}
       backBtn.classList.add('active');
       openTabBtn.classList.add('active');
       clearTimeout(overlayFadeTimer);
@@ -3079,6 +3537,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     overlay.style.display = 'none';
     frame.src = 'about:blank';
     AudioEngine.whoosh();
+    AudioEngine.duckMusic(false);
+    checkAchievements();
     const backPos = savedCameraPos || camera.position.clone();
     const backTarget = savedTarget || controls.target.clone();
     animateCameraTo(backPos, backTarget, 700, () => {
@@ -3094,16 +3554,18 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   // Future games can report real scores into this personal leaderboard.
   // Example from a game iframe:
   // parent.postMessage({type:'arcadeScore', game:'Terminal', score:1234}, '*');
+  // Only the game that is currently open in the arcade frame is listened to.
   window.addEventListener('message', e => {
     const d = e.data || {};
     if (d.type !== 'arcadeScore' || !gameOpen || !currentGame) return;
+    if (e.source !== frame.contentWindow) return;
     const score = Number(d.score);
     if (!Number.isFinite(score)) return;
-    const key = currentGame.title + '.__score';
-    const best = Number(localStorage.getItem('neonArcade.' + key)) || 0;
-    if (score > best) {
-      try { localStorage.setItem('neonArcade.' + key, String(score)); } catch(err){}
-    }
+    const key = 'neonArcade.' + currentGame.title + '.__score';
+    try {
+      const best = Number(localStorage.getItem(key)) || 0;
+      if (score > best) localStorage.setItem(key, String(score));
+    } catch(err){}
   });
 
   window.addEventListener('beforeunload', () => {
@@ -3125,11 +3587,17 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     drawGridTexture();    gridTexture.needsUpdate = true;
     drawWallTexture();    wallTexture.needsUpdate = true;
     cabinets.forEach(c => { c.drawMarqueeTexture(); c.marqueeTexture.needsUpdate = true; });
+    staticRedraws.forEach(f => f());   // neon sign + cabinet grille / coin door / glass / glow
     drawAllMenus();
   }
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) refreshStaticTextures();
+    if (document.hidden) {
+      AudioEngine.suspend();      // stop the audio clock while the tab is in the background
+    } else {
+      AudioEngine.resume();
+      refreshStaticTextures();
+    }
   });
 
   renderer.domElement.addEventListener('webglcontextlost', e => {
@@ -3273,11 +3741,60 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     updateMobileControlsVisibility();
 
     const pulse = Math.sin(now * 0.004) * 0.2;
+    const breathe = 0.5 + 0.5 * Math.sin(now * 0.005);
     cabinets.forEach(c => {
       if (!(joystickDragging && c === activeCab)) c.stickTilt.rotation.x *= 0.82;
-      const base = (c === activeCab) ? 1.2 : (arcadePowered ? 1.0 : 0.55);
-      c.screenGlow.intensity = base + pulse * (c === activeCab ? 1 : 0.4);
+      const active = (c === activeCab);
+      const near = (c === nearCab && phase === PHASE_ROOM);
+      // trim glows a little brighter on the machine you're sitting at / standing next to
+      c.trimMat.emissiveIntensity = 0.55 + (active ? 0.3 * breathe : (near ? 0.35 * breathe : 0));
+      // coin slot: idle blink, full flash when a game launches
+      const blink = 0.5 + 0.5 * Math.sin(now * 0.006 + c.phaseOff);
+      c.coinLightMat.opacity = now < c.coinFlashUntil ? 1 : (arcadePowered ? 0.3 + 0.5 * blink : 0.12);
+      // coloured pool of light on the floor
+      c.floorGlowMat.opacity = arcadePowered ? 0.3 + (active ? 0.28 : (near ? 0.14 : 0)) + 0.04 * blink : 0.1;
+      // the four buttons pulse on the active machine so it's obvious what's pressable
+      const btnI = active ? 0.45 + 0.5 * breathe : 0.4;
+      for (let i = 0; i < c.buttons.length; i++) c.buttons[i].material.emissiveIntensity = btnI;
+      // marquee: an occasional brief flicker (the horror machine misbehaves more)
+      let f = 1;
+      if (!reduceMotion) {
+        if (now > c.nextFlicker) {
+          c.flickerUntil = now + 70 + Math.random() * 110;
+          c.nextFlicker = now + (c.id === 'horror' ? 1200 + Math.random() * 3000 : 5000 + Math.random() * 11000);
+        }
+        if (now < c.flickerUntil) f = 0.35 + Math.random() * 0.5;
+      }
+      c.marqueeMat.color.setScalar(f);
     });
+
+    // back-wall neon sign: dark until the arcade powers on, then flickers now and then
+    if (!reduceMotion && now > signNextFlicker) {
+      signFlickerUntil = now + 90 + Math.random() * 140;
+      signNextFlicker = now + 3500 + Math.random() * 9000;
+    }
+    signMat.opacity = arcadePowered ? ((!reduceMotion && now < signFlickerUntil) ? 0.35 + Math.random() * 0.4 : 1) : 0.14;
+    dustMat.opacity = arcadePowered ? 0.5 : 0.22;
+
+    // CRT turn-on wipe and channel-change static need a redraw every frame while they play
+    if (activeCab && !gameOpen &&
+        ((now >= activeCab.bootStart && now < activeCab.bootStart + 500) || now < activeCab.staticUntil)) {
+      drawMenu(activeCab);
+    }
+
+    // Cabinet screen glow: the 3 pooled lights sit on whichever machines are
+    // closest to the machine you're at (or to the player, when walking around).
+    const glowRef = activeCab ? activeCab.group.position : player.position;
+    cabinets.forEach(c => { c._glowDist = Math.hypot(c.group.position.x - glowRef.x, c.group.position.z - glowRef.z); });
+    const glowOrder = cabinets.slice().sort((a, b) => a._glowDist - b._glowDist);
+    for (let i = 0; i < glowPool.length; i++) {
+      const light = glowPool[i], c = glowOrder[i];
+      if (!c) { light.intensity = 0; continue; }
+      c.glowAnchor.getWorldPosition(light.position);
+      light.color.setHex(c.accent);
+      const base = (c === activeCab) ? 1.2 : (arcadePowered ? 1.0 : 0.55);
+      light.intensity = base + pulse * (c === activeCab ? 1 : 0.4);
+    }
 
     if(equippedSkin==='gold'){ const shimmer=.11+Math.sin(now*.003)*.045; playerMat.emissiveIntensity=shimmer; }
     updateRoomProximity();
@@ -3286,6 +3803,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     if (ticketTimeAccumulator > 30) {
       ticketTimeAccumulator = 0;
       addTickets(1);
+      checkAchievements();
     }
 
     saveAccumulator += dt;
@@ -3299,7 +3817,14 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       if (phase === PHASE_ROOM) saveSession({phase:PHASE_ROOM});
     }
 
-    renderer.render(scene, camera);
+    if (!(gameOpen && overlay.style.display === 'flex')) updateDust(dt, now);
+    if (mapOverlay.style.display === 'flex') updateMapPlayer();
+
+    // While a game fills the screen the 3D scene is completely hidden behind
+    // it, so don't spend GPU time drawing it (the camera zoom-in / zoom-out
+    // animations still render normally).
+    const covered = gameOpen && !cameraAnimating && overlay.style.display === 'flex';
+    if (!covered) renderer.render(scene, camera);
   }
 
   // build every machine now that all the helpers it needs exist
@@ -3323,6 +3848,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     if (saved.phase === PHASE_ARCADE || saved.phase === PHASE_GAME) {
       const cab = cabinets.find(c => c.id === saved.cabinetId) || cabinets[0];
       if (saved.player) player.position.set(saved.player.x || 0, saved.player.y || FLOOR_Y, saved.player.z || 3.8);
+    if (Number.isFinite(saved.rot)) player.rotation.y = saved.rot;
       if (saved.preArcadeCamera && saved.preArcadeTarget) {
         preArcadeCameraPos = new THREE.Vector3(saved.preArcadeCamera.x, saved.preArcadeCamera.y, saved.preArcadeCamera.z);
         preArcadeCameraTarget = new THREE.Vector3(saved.preArcadeTarget.x, saved.preArcadeTarget.y, saved.preArcadeTarget.z);
@@ -3339,6 +3865,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     }
 
     if (saved.player) player.position.set(saved.player.x || 0, saved.player.y || FLOOR_Y, saved.player.z || 3.8);
+    if (Number.isFinite(saved.rot)) player.rotation.y = saved.rot;
     if (saved.camera && saved.target) {
       camera.position.set(saved.camera.x, saved.camera.y, saved.camera.z);
       controls.target.set(saved.target.x, saved.target.y, saved.target.z);
@@ -3360,12 +3887,16 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 
   const muteBtn = document.getElementById('mute-btn');
   const volumeSlider = document.getElementById('volume-slider');
+  const musicSlider = document.getElementById('music-slider');
+  const sfxSlider = document.getElementById('sfx-slider');
   function refreshMuteBtn(){
     const m = AudioEngine.isMuted();
     muteBtn.innerHTML = m ? '&#128263;' : '&#128266;';
     muteBtn.classList.toggle('muted', m);
   }
   volumeSlider.value = Math.round(AudioEngine.getVolume() * 100);
+  musicSlider.value = Math.round(AudioEngine.getMusicVolume() * 100);
+  sfxSlider.value = Math.round(AudioEngine.getSfxVolume() * 100);
   refreshMuteBtn();
   muteBtn.addEventListener('click', () => {
     AudioEngine.setMuted(!AudioEngine.isMuted());
@@ -3375,6 +3906,10 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     AudioEngine.setVolume(volumeSlider.value / 100);
     if (AudioEngine.isMuted()) { AudioEngine.setMuted(false); refreshMuteBtn(); }
   });
+  musicSlider.addEventListener('input', () => { AudioEngine.setMusicVolume(musicSlider.value / 100); });
+  sfxSlider.addEventListener('input', () => { AudioEngine.setSfxVolume(sfxSlider.value / 100); });
+  // a short blip when you let go of the effects slider so you can hear the new level
+  sfxSlider.addEventListener('change', () => { AudioEngine.click(); });
 
   // ---- fullscreen -------------------------------------------------------
   // Desktop/iPad browsers can use the Fullscreen API. iPhone Safari still
@@ -3391,6 +3926,21 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isIOSMobile = isIPhone || isIPad;
   const safariToolbarTip = document.getElementById('safari-toolbar-tip');
+  // The Safari tip shows for a few seconds, then gets out of the way (tap it to
+  // dismiss sooner). It stays dismissed for the rest of the browser session.
+  let tipTimer = null;
+  function hideSafariTip(){
+    document.documentElement.classList.add('tip-hidden');
+    try { sessionStorage.setItem('neonArcade.tipSeen', '1'); } catch(e){}
+  }
+  function armSafariTip(){
+    if (tipTimer !== null || !document.documentElement.classList.contains('ios-safari-tip')) return;
+    let seen = false;
+    try { seen = sessionStorage.getItem('neonArcade.tipSeen') === '1'; } catch(e){}
+    if (seen) { document.documentElement.classList.add('tip-hidden'); tipTimer = 0; return; }
+    tipTimer = setTimeout(hideSafariTip, 9000);
+  }
+  if (safariToolbarTip) safariToolbarTip.addEventListener('click', hideSafariTip);
 
   function fullscreenElement(){
     return document.fullscreenElement || document.webkitFullscreenElement ||
@@ -3428,6 +3978,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       fullscreenBtn.classList.toggle('is-exit', immersiveOn);
       if (safariToolbarTip) {
         document.documentElement.classList.toggle('ios-safari-tip', isIOSMobile && !isStandalone());
+        armSafariTip();
       }
       return;
     }
@@ -3513,9 +4064,37 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   if (window.visualViewport) window.visualViewport.addEventListener('resize', refreshFullscreenBtn);
   refreshFullscreenBtn();
 
+  // ---- phone MENU button: folds Settings / Stats / Feedback / Floor / Fullscreen away ----
+  const menuToggleBtn = document.getElementById('menu-toggle-btn');
+  function setMenuOpen(open){
+    document.body.classList.toggle('menu-open', open);
+    menuToggleBtn.innerHTML = open ? '&#10005; CLOSE' : '&#9776; MENU';
+  }
+  menuToggleBtn.addEventListener('click', () => {
+    AudioEngine.click();
+    setMenuOpen(!document.body.classList.contains('menu-open'));
+  });
+  ['settings-btn', 'leaderboard-btn', 'feedback-btn', 'map-btn', 'fullscreen-btn'].forEach(id => {
+    document.getElementById(id).addEventListener('click', () => setMenuOpen(false));
+  });
+
+  // ---- portrait-phone hint: shows for a few seconds, tap to dismiss ----
+  const rotateTip = document.getElementById('rotate-tip');
+  const portraitMQ = window.matchMedia ? window.matchMedia('(orientation: portrait)') : null;
+  let rotateShown = null, rotateDismissed = false, rotateTimer = null;
+  function refreshRotateTip(){
+    const show = isMobile && !rotateDismissed && !gameOpen && !!portraitMQ && portraitMQ.matches;
+    if (show === rotateShown) return;
+    rotateShown = show;
+    rotateTip.style.display = show ? 'block' : 'none';
+    if (show && rotateTimer === null) rotateTimer = setTimeout(() => { rotateDismissed = true; refreshRotateTip(); }, 8000);
+  }
+  rotateTip.addEventListener('click', () => { rotateDismissed = true; refreshRotateTip(); });
+
   function reveal(){
     document.getElementById('fallback').style.display = 'none';
     appEl.style.display = 'block';
+    refreshStaticTextures(); // fonts are ready now — redraw the sign and cabinet details with the real font
     drawAllMenus();
     const restored = restoreSavedSession();
     if (!restored) {
@@ -3538,4 +4117,4 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 })();
 </script>
 </body>
-  </html>
+</html>
