@@ -2357,16 +2357,32 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     { id:'green',   name:'NEON',    color:0x39ff14, cost:15, metalness:.18, roughness:.34, emissive:0x082b04, emissiveIntensity:.14 },
     { id:'orange',  name:'ORANGE',  color:0xff8020, cost:20, metalness:.18, roughness:.38 },
     { id:'purple',  name:'PURPLE',  color:0xb060e0, cost:25, metalness:.28, roughness:.32 },
-    { id:'gold',    name:'GOLD',    color:0xffd700, cost:50, metalness:.94, roughness:.08, emissive:0x6b3900, emissiveIntensity:.13 },
+    { id:'gold',    name:'GOLD',    color:0xffd700, cost:50, metalness:.94, roughness:.08, emissive:0x6b3900, emissiveIntensity:.13, shimmer:'gold' },
     { id:'silver',  name:'SILVER',  color:0xe8edf2, cost:35, metalness:.92, roughness:.12 },
     { id:'ruby',    name:'RUBY',    color:0xd4143a, cost:40, metalness:.72, roughness:.18, emissive:0x330006, emissiveIntensity:.12 },
     { id:'ice',     name:'ICE',     color:0xb9f6ff, cost:45, metalness:.52, roughness:.14, emissive:0x16434a, emissiveIntensity:.15 },
     { id:'void',    name:'VOID',    color:0x17131f, cost:60, metalness:.8, roughness:.2, emissive:0x050008, emissiveIntensity:.25 },
+    { id:'crimson', name:'CRIMSON', color:0xd42020, cost:12, metalness:.12, roughness:.5 },
+    { id:'azure',   name:'AZURE',   color:0x2a6fe0, cost:18, metalness:.35, roughness:.3, emissive:0x081a3a, emissiveIntensity:.1 },
+    { id:'mint',    name:'MINT',    color:0xa8f0c8, cost:14, metalness:.08, roughness:.55 },
+    { id:'coral',   name:'CORAL',   color:0xff7a6b, cost:14, metalness:.1, roughness:.45 },
+    { id:'bronze',  name:'BRONZE',  color:0xa0672f, cost:38, metalness:.85, roughness:.22 },
+    { id:'emerald', name:'EMERALD', color:0x0fae5a, cost:48, metalness:.7, roughness:.15, emissive:0x032c15, emissiveIntensity:.16 },
+    { id:'sapphire',name:'SAPPHIRE',color:0x1a53d6, cost:48, metalness:.72, roughness:.15, emissive:0x061634, emissiveIntensity:.16 },
+    { id:'amethyst',name:'AMETHYST',color:0x8a3fd6, cost:48, metalness:.7, roughness:.16, emissive:0x220a3a, emissiveIntensity:.16 },
+    { id:'inferno', name:'INFERNO', color:0xff3b10, cost:70, metalness:.5, roughness:.28, emissive:0xff5a10, emissiveIntensity:.22, shimmer:'lava' },
+    { id:'prism',   name:'PRISM',   color:0xf3f6ff, cost:90, metalness:.95, roughness:.04, emissive:0x8080ff, emissiveIntensity:.2, shimmer:'hue' },
   ];
   const COSMETIC_OPTIONS = [
     {id:'none', name:'NONE', cost:0}, {id:'cap', name:'CAP', cost:12}, {id:'visor', name:'VISOR', cost:18},
     {id:'crown', name:'CROWN', cost:75}, {id:'halo', name:'HALO', cost:65}, {id:'antenna', name:'ANTENNA', cost:22},
-    {id:'headphones', name:'HEADPHONES', cost:30}, {id:'bowtie', name:'BOW TIE', cost:16}
+    {id:'headphones', name:'HEADPHONES', cost:30}, {id:'bowtie', name:'BOW TIE', cost:16},
+    {id:'eyepatch', name:'EYEPATCH', cost:10}, {id:'sunglasses', name:'SUNGLASSES', cost:14},
+    {id:'bandana', name:'BANDANA', cost:14}, {id:'mohawk', name:'MOHAWK', cost:20},
+    {id:'monocle', name:'MONOCLE', cost:24}, {id:'necklace', name:'NECKLACE', cost:26},
+    {id:'scarf', name:'SCARF', cost:20}, {id:'tophat', name:'TOP HAT', cost:45},
+    {id:'backpack', name:'BACKPACK', cost:35}, {id:'cape', name:'CAPE', cost:55},
+    {id:'wings', name:'WINGS', cost:70}, {id:'jetpack', name:'JETPACK', cost:80}
   ];
   let tickets = 0, ownedSkins = ['grey'], equippedSkin = 'grey';
   let prizeScreenRedraw = null, hallRedraw = null; // set when the entrance hall is built (end of this section)
@@ -2449,7 +2465,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   // Builds one accessory into any group. The in-room character and the
   // Settings preview both call this, so they always look identical.
   function buildCosmeticInto(group, id){
-    if(id==='none') return;
+    const parts = {};
+    if(id==='none') return parts;
     const dark=new THREE.MeshStandardMaterial({color:0x11131a,metalness:.55,roughness:.25});
     const accent=new THREE.MeshStandardMaterial({color:0x22e0ff,metalness:.45,roughness:.18,emissive:0x05242a,emissiveIntensity:.28});
     const gold=new THREE.MeshStandardMaterial({color:0xffd700,metalness:.95,roughness:.08,emissive:0x3b2400,emissiveIntensity:.18});
@@ -2506,11 +2523,123 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         wing.position.set(side*.065,1.08,.13); wing.rotation.z=side*.35; group.add(wing);
       });
       const knot=new THREE.Mesh(new THREE.BoxGeometry(.045,.055,.04),bowMat); knot.position.set(0,1.08,.15); group.add(knot);
+    } else if(id==='eyepatch'){
+      // small black patch over one eye, held by a thin diagonal strap.
+      const patch=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.02,16),dark);
+      patch.position.set(.05,1.565,.183); patch.rotation.x=Math.PI/2-.08; group.add(patch);
+      const strap=new THREE.Mesh(new THREE.BoxGeometry(.28,.018,.018),dark);
+      strap.position.set(-.02,1.56,.05); strap.rotation.y=.5; strap.rotation.z=.15; group.add(strap);
+    } else if(id==='sunglasses'){
+      // two dark lenses with a bridge and short arms back to the ears.
+      const lensMat=new THREE.MeshStandardMaterial({color:0x0a0a12,metalness:.6,roughness:.15,emissive:0x1a1a2a,emissiveIntensity:.2});
+      [-1,1].forEach(side=>{
+        const lens=new THREE.Mesh(new THREE.BoxGeometry(.09,.05,.02),lensMat);
+        lens.position.set(side*.065,1.565,.185); lens.rotation.x=-.08; group.add(lens);
+        const arm=new THREE.Mesh(new THREE.BoxGeometry(.09,.012,.012),dark);
+        arm.position.set(side*.155,1.565,.13); arm.rotation.y=side*.6; group.add(arm);
+      });
+      const bridge=new THREE.Mesh(new THREE.BoxGeometry(.03,.012,.012),dark);
+      bridge.position.set(0,1.565,.19); group.add(bridge);
+    } else if(id==='bandana'){
+      // short wrap over the crown of the head with a small knotted tail at the back.
+      const bandMat=new THREE.MeshStandardMaterial({color:0xff2bd6,metalness:.1,roughness:.7});
+      const wrap=new THREE.Mesh(new THREE.SphereGeometry(.2,16,8,0,Math.PI*2,0,Math.PI*0.4),bandMat);
+      wrap.scale.y=.5; wrap.position.set(0,1.635,0); group.add(wrap);
+      const tail=new THREE.Mesh(new THREE.ConeGeometry(.05,.13,4),bandMat);
+      tail.position.set(0,1.56,-.16); tail.rotation.x=Math.PI*0.62; group.add(tail);
+    } else if(id==='mohawk'){
+      // a row of bright spikes running front-to-back along the centre of the head.
+      const spikeMat=new THREE.MeshStandardMaterial({color:0x39ff14,metalness:.2,roughness:.3,emissive:0x0a3a04,emissiveIntensity:.35});
+      [[-.06,.06],[-.03,.085],[0,.095],[.03,.085],[.06,.065]].forEach(p=>{
+        const spike=new THREE.Mesh(new THREE.ConeGeometry(.022,p[1]*2,4),spikeMat);
+        spike.position.set(0,1.7+p[1],p[0]); group.add(spike);
+      });
+    } else if(id==='monocle'){
+      // a single ring in front of one eye with three small chain beads curling down.
+      const ringMat=new THREE.MeshStandardMaterial({color:0xffd700,metalness:.9,roughness:.15});
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(.042,.007,8,20),ringMat);
+      ring.position.set(.065,1.55,.19); group.add(ring);
+      for(let i=0;i<3;i++){
+        const bead=new THREE.Mesh(new THREE.SphereGeometry(.008,6,5),ringMat);
+        bead.position.set(.1+i*.02,1.52-i*.05,.13-i*.02); group.add(bead);
+      }
+    } else if(id==='necklace'){
+      // a thin gold ring around the neck plus a hanging gem.
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(.095,.008,8,24),gold);
+      ring.rotation.x=Math.PI/2; ring.position.set(0,1.36,0); group.add(ring);
+      const gem=new THREE.Mesh(new THREE.OctahedronGeometry(.026),new THREE.MeshStandardMaterial({color:0xff2bd6,metalness:.7,roughness:.12,emissive:0x33001e,emissiveIntensity:.5}));
+      gem.position.set(0,1.29,.115); group.add(gem);
+    } else if(id==='scarf'){
+      // a soft wrap at the neck with a strip trailing down the front.
+      const clothMat=new THREE.MeshStandardMaterial({color:0xd42020,metalness:.05,roughness:.75});
+      const wrap=new THREE.Mesh(new THREE.TorusGeometry(.11,.035,8,20),clothMat);
+      wrap.rotation.x=Math.PI/2; wrap.position.set(0,1.35,0); group.add(wrap);
+      const tail=new THREE.Mesh(new THREE.BoxGeometry(.09,.28,.03),clothMat);
+      tail.position.set(.02,1.15,.13); tail.rotation.x=.1; tail.rotation.z=-.06; group.add(tail);
+    } else if(id==='tophat'){
+      // formal cylinder + brim, taller and narrower than the cap.
+      const hatMat=new THREE.MeshStandardMaterial({color:0x0c0c10,metalness:.3,roughness:.4});
+      const brim=new THREE.Mesh(new THREE.CylinderGeometry(.185,.185,.02,20),hatMat);
+      brim.position.set(0,1.665,0); group.add(brim);
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(.115,.125,.22,20),hatMat);
+      body.position.set(0,1.785,0); group.add(body);
+      const band=new THREE.Mesh(new THREE.CylinderGeometry(.118,.118,.03,20),accent);
+      band.position.set(0,1.695,0); group.add(band);
+    } else if(id==='backpack'){
+      // a box on the back with two crossed shoulder straps and a small front pocket.
+      const bagMat=new THREE.MeshStandardMaterial({color:0x3a2860,metalness:.15,roughness:.55});
+      const bag=new THREE.Mesh(new THREE.BoxGeometry(.22,.26,.12),bagMat);
+      bag.position.set(0,1.12,-.17); group.add(bag);
+      const pocket=new THREE.Mesh(new THREE.BoxGeometry(.13,.09,.02),accent);
+      pocket.position.set(0,1.06,-.11); group.add(pocket);
+      [-1,1].forEach(side=>{
+        const strap=new THREE.Mesh(new THREE.BoxGeometry(.035,.32,.02),bagMat);
+        strap.position.set(side*.13,1.22,-.02); strap.rotation.x=.18; group.add(strap);
+      });
+    } else if(id==='cape'){
+      // a flowing panel from the shoulders down the back, with a collar at the neck.
+      const capeMat=new THREE.MeshStandardMaterial({color:0xff2bd6,metalness:.1,roughness:.6,side:THREE.DoubleSide});
+      const collar=new THREE.Mesh(new THREE.BoxGeometry(.34,.05,.05),capeMat);
+      collar.position.set(0,1.37,-.11); group.add(collar);
+      const capePanel=new THREE.Mesh(new THREE.BoxGeometry(.3,.85,.02),capeMat);
+      capePanel.position.set(0,.78,-.14); capePanel.rotation.x=.08; group.add(capePanel);
+      parts.cape=capePanel;
+    } else if(id==='wings'){
+      // a small fan of feather-shapes on each shoulder blade.
+      const wingMat=new THREE.MeshStandardMaterial({color:0xf1efe8,metalness:.05,roughness:.6,side:THREE.DoubleSide});
+      const wingL=new THREE.Group(); wingL.position.set(-.13,1.24,-.11); wingL.rotation.y=.5; group.add(wingL);
+      const wingR=new THREE.Group(); wingR.position.set(.13,1.24,-.11); wingR.rotation.y=-.5; group.add(wingR);
+      [wingL,wingR].forEach(w=>{
+        for(let i=0;i<3;i++){
+          const feather=new THREE.Mesh(new THREE.ConeGeometry(.05,.24-i*.05,4),wingMat);
+          feather.position.set(0,i*.05,-i*.06); feather.rotation.z=Math.PI/2+i*.12; feather.rotation.x=.1;
+          w.add(feather);
+        }
+      });
+      parts.wingL=wingL; parts.wingR=wingR;
+    } else if(id==='jetpack'){
+      // twin tanks on the back with small flame cones underneath that flicker.
+      const tankMat=new THREE.MeshStandardMaterial({color:0x8a8f9a,metalness:.8,roughness:.25});
+      const flameMat=new THREE.MeshBasicMaterial({color:0xff8020,transparent:true,opacity:.85});
+      const jL=new THREE.Group(), jR=new THREE.Group();
+      [[-.07,jL],[.07,jR]].forEach(p=>{
+        const g=p[1]; g.position.set(p[0],1.15,-.17); group.add(g);
+        const tank=new THREE.Mesh(new THREE.CylinderGeometry(.045,.05,.28,10),tankMat);
+        g.add(tank);
+        const cap=new THREE.Mesh(new THREE.CylinderGeometry(.03,.045,.03,10),accent);
+        cap.position.y=.155; g.add(cap);
+        const flame=new THREE.Mesh(new THREE.ConeGeometry(.032,.09,8),flameMat.clone());
+        flame.position.y=-.18; flame.rotation.x=Math.PI; g.add(flame);
+        g.userData.flame=flame;
+      });
+      parts.jetL=jL; parts.jetR=jR;
     }
+    return parts;
   }
+  let cosmeticParts = {};
   function buildPlayerCosmetic(id){
     clearCosmetics();
-    buildCosmeticInto(playerCosmeticGroup, id);
+    cosmeticParts = buildCosmeticInto(playerCosmeticGroup, id) || {};
     if (typeof miniPreview !== 'undefined') miniPreview.setCosmetic(id);
   }
   function equipCosmetic(id){ if(!adminMode && ownedCosmetics.indexOf(id)===-1) return; equippedCosmetic=id; try{localStorage.setItem('neonArcade.equippedCosmetic',id)}catch(e){} buildPlayerCosmetic(id); renderCustomizeMenu(); checkAchievements(); }
@@ -2618,6 +2747,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       check:() => streak >= 7 },
     { id:'cheat_code',   name:'CHEAT CODE',     desc:'ENTER A CERTAIN FAMOUS CODE',
       check:() => !!achFlags.konami },
+    { id:'collector',    name:'COLLECTOR',      desc:'OWN 15 SUITS &amp; ACCESSORIES',
+      check:() => (ownedSkins.length + ownedCosmetics.length) >= 15 },
   ];
   function saveAchievements(){
     try {
@@ -2869,8 +3000,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         customizeGrid.appendChild(item);
       });
     } else {
-      const colors={none:'#666',cap:'#b060e0',visor:'#22e0ff',crown:'#ffd700',halo:'#ffe600',antenna:'#ff2bd6',headphones:'#39ff14',bowtie:'#ff2bd6'};
-      const icons={none:'○',cap:'⌒',visor:'▰',crown:'♛',halo:'◯',antenna:'⌁',headphones:'◉',bowtie:'◆'};
+      const colors={none:'#666',cap:'#b060e0',visor:'#22e0ff',crown:'#ffd700',halo:'#ffe600',antenna:'#ff2bd6',headphones:'#39ff14',bowtie:'#ff2bd6',eyepatch:'#333',sunglasses:'#22e0ff',bandana:'#ff2bd6',mohawk:'#39ff14',monocle:'#ffd700',necklace:'#ffd700',scarf:'#d42020',tophat:'#0c0c10',backpack:'#3a2860',cape:'#ff2bd6',wings:'#f1efe8',jetpack:'#8a8f9a'};
+      const icons={none:'○',cap:'⌒',visor:'▰',crown:'♛',halo:'◯',antenna:'⌁',headphones:'◉',bowtie:'◆',eyepatch:'◐',sunglasses:'▬',bandana:'▲',mohawk:'▵',monocle:'⊙',necklace:'⬥',scarf:'≋',tophat:'⛃',backpack:'▣',cape:'▽',wings:'❯❮',jetpack:'⌷'};
       COSMETIC_OPTIONS.forEach(c => {
         const owned=adminMode||ownedCosmetics.indexOf(c.id)!==-1; const equipped=equippedCosmetic===c.id;
         const item=document.createElement('button'); item.className='inventory-item'+(equipped?' equipped':'');
@@ -4562,6 +4693,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 
   let lastFrame = performance.now();
   let saveAccumulator = 0;
+  const _hsl = { h: 0, s: 0, l: 0 };  // scratch object for the prism suit's hue cycle
   // attract screens: only the machines nearest to you animate, and only ~12 times a second
   let ATTRACT_N = isMobile ? 2 : 3, ATTRACT_MS = isMobile ? 100 : 80;
   let lastAttractDraw = 0;
@@ -4776,7 +4908,28 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       }
     }
 
-    if(equippedSkin==='gold'){ const shimmer=.11+Math.sin(now*.003)*.045; playerMat.emissiveIntensity=shimmer; }
+    // suit shimmer: gold/inferno pulse their glow, prism slowly cycles hue
+    const curSkin = SKIN_OPTIONS.find(s => s.id === equippedSkin);
+    if (curSkin && curSkin.shimmer && !reduceMotion) {
+      if (curSkin.shimmer === 'gold') playerMat.emissiveIntensity = .11 + Math.sin(now * .003) * .045;
+      else if (curSkin.shimmer === 'lava') playerMat.emissiveIntensity = .22 + Math.sin(now * .0045) * .16;
+      else if (curSkin.shimmer === 'hue') {
+        _hsl.h = (now * .00006) % 1; _hsl.s = .55; _hsl.l = .65;
+        playerMat.emissive.setHSL(_hsl.h, _hsl.s, _hsl.l);
+      }
+    }
+    // accessory animation: jetpack flame flicker, wing flap, cape sway
+    if (equippedCosmetic === 'jetpack' && cosmeticParts.jetL && !reduceMotion) {
+      [cosmeticParts.jetL, cosmeticParts.jetR].forEach((g, i) => {
+        const f = g.userData.flame, s = .8 + Math.sin(now * .03 + i * 2) * .35 + Math.random() * .15;
+        f.scale.set(1, Math.max(.3, s), 1); f.material.opacity = .6 + Math.random() * .3;
+      });
+    } else if (equippedCosmetic === 'wings' && cosmeticParts.wingL && !reduceMotion) {
+      const flap = Math.sin(now * .006) * .18;
+      cosmeticParts.wingL.rotation.z = flap; cosmeticParts.wingR.rotation.z = -flap;
+    } else if (equippedCosmetic === 'cape' && cosmeticParts.cape && !reduceMotion) {
+      cosmeticParts.cape.rotation.x = .08 + Math.sin(now * .0022) * .05;
+    }
     updateRoomProximity();
 
     ticketTimeAccumulator += dt;
@@ -5234,4 +5387,4 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 })();
 </script>
 </body>
-  </html>
+                                                                                                                                                                         </html>
