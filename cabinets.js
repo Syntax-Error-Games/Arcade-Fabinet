@@ -85,6 +85,8 @@ window.ARCADE_CABINETS = [
         { title: "Crossy Farm", file: "games/crossy-farm-car/index.html" },
         { title: "Flappy Bird", file: "games/flappy-bird/index.html" },
         { title: "Mario 1-1", file: "games/mario-1-1/index.html" },
+        { title: "Subway Surfers New York", file: "ubg42.github.io/SubwaySurfersNewYork/" },
+        { title: "Meccha Chameleon", file: "ubg42.github.io/MecchaChameleonOnline/" },
         { title: "Subway Runner", file: "games/subway-runner/index.html" }
       ]
     },
