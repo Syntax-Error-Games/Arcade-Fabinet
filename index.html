@@ -3508,34 +3508,116 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     addNeon(2.6, 0.05, 0.05, 0, 3.02, 7.08, 0xffe600, 1.0);
 
     // ---- the night street seen through the doors ----
-    function drawStreet(g, w, h){
-      const horizon = h * 0.72;
-      const sky = g.createLinearGradient(0, 0, 0, horizon);
-      sky.addColorStop(0, '#070a24'); sky.addColorStop(1, '#3a1050');
-      g.fillStyle = sky; g.fillRect(0, 0, w, h);
-      for (let i = 0; i < 40; i++) { g.fillStyle = 'rgba(255,255,255,' + (0.3 + rnd(i) * 0.6) + ')'; g.fillRect(rnd(i * 2 + 100) * w, rnd(i * 2 + 101) * h * 0.4, 2, 2); }
-      g.fillStyle = '#f3ecd0'; g.beginPath(); g.arc(312, 84, 26, 0, 6.2832); g.fill();
-      g.fillStyle = '#d9cfae'; g.beginPath(); g.arc(320, 76, 6, 0, 6.2832); g.fill();
-      for (let i = 0; i < 9; i++) {
-        const bw = 40 + rnd(i) * 30, bh = 110 + rnd(i + 9) * 150, bx = i * 48 - 8, by = horizon - bh;
-        g.fillStyle = '#120a22'; g.fillRect(bx, by, bw, bh);
-        for (let wy = by + 12; wy < horizon - 14; wy += 18) for (let wx = bx + 6; wx < bx + bw - 8; wx += 14) {
-          g.fillStyle = rnd(wx * 3 + wy) > 0.55 ? '#ffd070' : '#1c1234'; g.fillRect(wx, wy, 6, 8);
-        }
-      }
-      g.fillStyle = '#0c0714'; g.fillRect(0, horizon, w, h - horizon);
-      g.fillStyle = '#1a1230'; g.fillRect(0, horizon, w, 6);
-      g.fillStyle = '#3a2f55'; for (let x = 10; x < w; x += 70) g.fillRect(x, h * 0.88, 36, 4);
-      [70, 350].forEach(lx => {
-        g.fillStyle = '#2a2440'; g.fillRect(lx - 3, horizon - 120, 6, 120);
-        const lg = g.createRadialGradient(lx, horizon - 124, 2, lx, horizon - 124, 70);
-        lg.addColorStop(0, 'rgba(255,220,150,0.9)'); lg.addColorStop(1, 'rgba(255,220,150,0)');
-        g.fillStyle = lg; g.fillRect(lx - 70, horizon - 194, 140, 140);
-      });
-      g.fillStyle = '#0c0714'; g.fillRect(150, horizon - 64, 116, 34);
-      g.fillStyle = '#ff2bd6'; g.font = "22px 'Press Start 2P', monospace"; g.textAlign = 'center'; g.fillText('OPEN', 208, horizon - 38);
+    // ---- the view through the doors: an animated synthwave skyline instead of
+    // a static street. A retro sun, a scrolling perspective grid "highway", a
+    // skyline that flickers, the odd shooting star, and a hovercar that drifts
+    // past every so often. Redrawn on a timer (see entranceTick at the bottom
+    // of this IIFE), not every frame — it's a small canvas, but there is no
+    // reason to repaint it 60 times a second. ----
+    const SW = 416, SH = 480, SKY_HORIZON = SH * 0.56;
+    const streetCanvas = document.createElement('canvas');
+    streetCanvas.width = SW; streetCanvas.height = SH;
+    const streetCtx = streetCanvas.getContext('2d');
+    const streetTex = new THREE.CanvasTexture(streetCanvas);
+
+    // skyline silhouette + which of its windows are lit is fixed per building
+    // (only the flicker toggles), so it's worked out once up front
+    const SKY_BUILDINGS = [];
+    for (let i = 0; i < 10; i++) {
+      const bw = 34 + rnd(i) * 28, bh = 90 + rnd(i + 9) * 150, bx = i * 44 - 6, by = SKY_HORIZON - bh;
+      const windows = [];
+      for (let wy = by + 10; wy < SKY_HORIZON - 12; wy += 15) for (let wx = bx + 5; wx < bx + bw - 6; wx += 12) windows.push([wx, wy, rnd(wx * 3 + wy) > 0.58]);
+      SKY_BUILDINGS.push({ bx, by, bw, bh, windows, tint: i % 2 ? '#ff2bd6' : '#22e0ff' });
     }
-    const streetTex = makeCanvasTex(416, 480, drawStreet);
+    // a few shooting stars, each with its own timing so they don't all streak at once
+    const SHOOTING_STARS = [0, 1, 2].map(i => ({ period: 6000 + i * 2300, offset: i * 1700, y0: 30 + i * 26, len: 46 + i * 10 }));
+
+    function drawEntranceScene(t){
+      const g = streetCtx, w = SW, h = SH, horizon = SKY_HORIZON;
+      const flicker = i => (Math.sin(t * 0.0021 + i * 12.9) > 0.986);
+
+      // sky: deep space fading into hot magenta at the horizon
+      const sky = g.createLinearGradient(0, 0, 0, horizon);
+      sky.addColorStop(0, '#05061c'); sky.addColorStop(0.55, '#2a1050'); sky.addColorStop(1, '#7a1a6a');
+      g.fillStyle = sky; g.fillRect(0, 0, w, h);
+
+      // stars, a handful of which twinkle
+      for (let i = 0; i < 46; i++) {
+        const tw = Math.sin(t * 0.003 + i * 7.7) * 0.5 + 0.5;
+        g.fillStyle = 'rgba(255,255,255,' + (0.25 + rnd(i * 2 + 100) * 0.5 + tw * 0.25) + ')';
+        g.fillRect(rnd(i * 2 + 100) * w, rnd(i * 2 + 101) * horizon * 0.72, 2, 2);
+      }
+      // the odd shooting star streaking across the upper sky
+      SHOOTING_STARS.forEach(s => {
+        const p = ((t + s.offset) % s.period) / s.period;
+        if (p > 0.12) return;
+        const e = p / 0.12, x = e * (w + 80) - 40, y = s.y0 + e * 30;
+        g.strokeStyle = 'rgba(255,255,255,' + (1 - e) * 0.9 + ')'; g.lineWidth = 2;
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x - s.len, y - s.len * 0.35); g.stroke();
+      });
+
+      // retro sun: a circle sliced by a stack of receding horizontal bars
+      const sunX = w * 0.72, sunY = horizon - 92, sunR = 62;
+      const sunGrad = g.createLinearGradient(0, sunY - sunR, 0, sunY + sunR);
+      sunGrad.addColorStop(0, '#ffe66d'); sunGrad.addColorStop(0.55, '#ff6a3d'); sunGrad.addColorStop(1, '#ff2bd6');
+      g.save(); g.beginPath(); g.arc(sunX, sunY, sunR, 0, 6.2832); g.clip();
+      g.fillStyle = sunGrad; g.fillRect(sunX - sunR, sunY - sunR, sunR * 2, sunR * 2);
+      g.fillStyle = sky; // the bars are just gaps back to the sky colour, closest bars widest
+      let by = sunY - sunR * 0.05, bh2 = 3, gap = 5;
+      while (by < sunY + sunR) { g.fillRect(sunX - sunR, by, sunR * 2, bh2); by += bh2 + gap; bh2 += 1.15; gap = Math.max(2, gap - 0.4); }
+      g.restore();
+
+      // skyline: silhouettes with a scattering of lit (and occasionally flickering) windows
+      SKY_BUILDINGS.forEach((b, bi) => {
+        g.fillStyle = '#0c0620'; g.fillRect(b.bx, b.by, b.bw, b.bh);
+        g.strokeStyle = b.tint; g.globalAlpha = 0.35; g.lineWidth = 1; g.strokeRect(b.bx + 0.5, b.by + 0.5, b.bw - 1, b.bh - 1); g.globalAlpha = 1;
+        b.windows.forEach((wd, wi) => {
+          const on = wd[2] !== flicker(bi * 40 + wi);
+          g.fillStyle = on ? (wi % 5 === 0 ? '#aef4ff' : '#ffd070') : '#1c1234';
+          g.fillRect(wd[0], wd[1], 6, 8);
+        });
+      });
+
+      // the ground: a magenta/cyan perspective grid scrolling toward the viewer
+      g.fillStyle = '#0a0414'; g.fillRect(0, horizon, w, h - horizon);
+      const vx = w / 2, scroll = (t * 0.09) % 46;
+      g.strokeStyle = 'rgba(255,43,214,0.55)'; g.lineWidth = 1;
+      for (let x = -12; x <= 12; x++) { g.beginPath(); g.moveTo(vx + x * 5, horizon); g.lineTo(vx + x * 92, h); g.stroke(); }
+      g.strokeStyle = 'rgba(34,224,255,0.4)';
+      for (let ry = 0; ry < 10; ry++) {
+        const yy = horizon + Math.pow(ry + scroll / 46, 2.1) * 3.4;
+        if (yy > h) continue;
+        g.beginPath(); g.moveTo(0, yy); g.lineTo(w, yy); g.stroke();
+      }
+      const hg = g.createLinearGradient(0, horizon - 4, 0, horizon + 40);
+      hg.addColorStop(0, 'rgba(255,120,220,0.55)'); hg.addColorStop(1, 'rgba(255,120,220,0)');
+      g.fillStyle = hg; g.fillRect(0, horizon - 4, w, 44);
+
+      // a small hovercar drifting past in the middle distance, trailing two light streaks
+      const carPeriod = 9000, cp = (t % carPeriod) / carPeriod;
+      if (cp < 0.7) {
+        const ce = cp / 0.7, cx = -40 + ce * (w + 80), cy = horizon - 46 + Math.sin(ce * 9) * 2;
+        g.fillStyle = '#1a1230'; g.fillRect(cx - 13, cy - 4, 26, 8);
+        g.fillStyle = '#aef4ff'; g.fillRect(cx - 7, cy - 8, 14, 5);
+        g.fillStyle = 'rgba(255,120,60,0.8)'; g.fillRect(cx - 22, cy - 1, 9, 2); g.fillRect(cx - 22, cy + 3, 9, 2);
+      }
+
+      // "ARCADE CITY" marquee, hanging mid-scene above the crossroad
+      g.textAlign = 'center'; g.font = "20px 'Press Start 2P', monospace";
+      g.shadowColor = '#22e0ff'; g.shadowBlur = 16; g.fillStyle = '#d8fbff'; g.fillText('ARCADE CITY', w / 2, horizon - 118);
+      g.shadowBlur = 0;
+
+      // ground-level neon "OPEN" sign, same spot as before
+      g.fillStyle = '#0c0714'; g.fillRect(150, horizon + 6, 116, 34);
+      g.fillStyle = flicker(999) ? '#8a1a70' : '#ff2bd6';
+      g.font = "22px 'Press Start 2P', monospace"; g.fillText('OPEN', 208, horizon + 32);
+
+      streetTex.needsUpdate = true;
+    }
+    let entranceSceneT = 0, entranceSceneNext = 0;
+    drawEntranceScene(0);
+    staticRedraws.push(() => drawEntranceScene(entranceSceneT));   // repaint once if fonts finish loading late / tab was hidden
+
     const outside = new THREE.Mesh(new THREE.PlaneGeometry(2.62, 3.05), new THREE.MeshBasicMaterial({ map: streetTex, fog: false }));
     outside.position.set(0, 1.5, 7.47); outside.rotation.y = Math.PI; scene.add(outside);
 
@@ -3700,6 +3782,11 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     // ---- per-frame: automatic doors, chase lights, signs power up with the arcade ----
     let open = 0, wasOpen = false, lastStep = -1;
     entranceTick = (now, dt) => {
+      entranceSceneT = now;
+      if (!reduceMotion && now > entranceSceneNext) {
+        entranceSceneNext = now + (typeof lowQuality !== 'undefined' && lowQuality ? 260 : 140);
+        drawEntranceScene(now);
+      }
       const d = Math.hypot(player.position.x, player.position.z - WALL_Z);
       const want = (phase === PHASE_ROOM && d < 3.6) ? 1 : 0;
       if (want && !wasOpen) AudioEngine.whoosh();
@@ -5387,4 +5474,4 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 })();
 </script>
 </body>
-                                                                                                                                                                         </html>
+  </html>
