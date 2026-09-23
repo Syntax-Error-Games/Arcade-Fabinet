@@ -82,6 +82,7 @@ window.ARCADE_CABINETS = [
         { title: "Pokemon Clone", file: "https://syntax-error-games.github.io/2026Q1_Fakemon/" },
         { title: "Level Devil", file: "https://ubghyper.github.io/GameList.github.io/Level-Devil/" },
         { title: "Platformer", file: "games/Platformer.html" },
+        { title: "Roller", file: "https://iherrick-mps.github.io/Simple-Roller-Game/" },
         { title: "Crossy Farm", file: "games/crossy-farm-car/index.html" },
         { title: "Flappy Bird", file: "games/flappy-bird/index.html" },
         { title: "Mario 1-1", file: "games/mario-1-1/index.html" },
@@ -114,8 +115,7 @@ window.ARCADE_CABINETS = [
       id:'toybox', title:'TOY BOX', tagline:'ODDS AND ENDS',
       accent:0xb060e0, x:5.3, z:-2.4, rotY:-Math.PI/2, where:'RIGHT WALL',
       games:[
-        { title: "Open in About Blank", file: "games/AboutBlank.html" },
-        { title: "About Blank Cloaker", file: "https://syntax-error-games.github.io/About-Blank/" },
+        { title: "About Blank Link Cloaker", file: "games/AboutBlank.html" },
         { title: "Cookie Clicker", file: "https://ozh.github.io/cookieclicker/" },
         { title: "Clicker Game", file: "games/ClickerGame.html" },
         { title: "Name Generator", file: "games/NameGenerator.html" },
