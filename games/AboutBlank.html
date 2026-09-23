@@ -1,3 +1,17 @@
-<script> 
-var win = window.open();   win.document.body.style.margin = '0';   win.document.body.style.height = '100vh';   var iframe = win.document.createElement('iframe');   iframe.style.border = 'none';   iframe.style.width = '100%';   iframe.style.height = '100%';   iframe.style.margin = '0';   iframe.src = 'https://syntax-error-games.github.io/Arcade-Cabinet/';   win.document.body.appendChild(iframe);
+<script>
+var win = window.open();
+if (!win) {
+    alert('Popups are blocked. Please allow popups for this site.');
+} else {
+    win.document.title = 'New Tab';
+    win.document.body.style.margin = '0';
+    win.document.body.style.height = '100vh';
+    var iframe = win.document.createElement('iframe');
+    iframe.style.border = 'none';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.margin = '0';
+    iframe.src = 'https://syntax-error-games.github.io/Arcade-Fabinet/';
+    win.document.body.appendChild(iframe);
+}
 </script>
