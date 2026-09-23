@@ -590,6 +590,24 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   #fullscreen-btn.is-exit{ color:#ff6a6a; border-color:#ff6a6a; }
   #fullscreen-btn.is-exit:hover{ border-color:#ff9a9a; }
 
+  /* ---------- keyboard focus button ---------- */
+  /* Embedding this page in an <iframe> (or the "open in about:blank" trick some
+     game sites use) leaves the browser's keyboard focus on the OUTER page, so
+     WASD silently does nothing until something inside THIS document is clicked.
+     This button grabs focus back on demand — it's desktop-only since mobile
+     controls don't use a keyboard. */
+  #focus-btn{
+    position:fixed; right:calc(14px + var(--sar)); top:calc(244px + var(--sat) + var(--off)); z-index:52;
+    font-family:'Press Start 2P', monospace; font-size:.5rem;
+    color:var(--phosphor); background:rgba(10,6,18,.78); border:2px solid var(--phosphor);
+    border-radius:4px; padding:8px 10px; cursor:pointer;
+    transition:opacity .25s, top .25s;
+  }
+  #focus-btn:hover{ background:var(--phosphor); color:#050505; }
+  body.game-playing #focus-btn{ opacity:.5; }
+  body.game-playing #focus-btn:hover{ opacity:1; }
+  body.mobile-mode #focus-btn{ display:none !important; }
+
   /* iPhone Safari cannot put arbitrary HTML into true browser fullscreen.
      This fallback fills the available dynamic viewport and removes our own
      page chrome, giving the game the largest possible touch play area. */
@@ -775,11 +793,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   by the address bar and choose <b>Hide Toolbar</b>.
 </div>
 <button id="fullscreen-btn">&#9974; FULLSCREEN</button>
+<button id="focus-btn" title="Click if WASD or the arrow keys stop responding &mdash; common when this page is embedded in another site or opened via an &quot;about:blank&quot; wrapper">&#9000; FOCUS</button>
 
 <div id="embed-banner">
   <div class="embed-text">
     This arcade is embedded in another page.
-    <a href="https://syntax-error-games.github.io/Arcade-Fabinet/" target="_blank" rel="noopener">OPEN THE REAL ARCADE &nearr;</a>
+    <a href="https://syntax-error-games.github.io/Arcade-Cabinet/" target="_blank" rel="noopener">OPEN THE REAL ARCADE &nearr;</a>
   </div>
   <button id="embed-dismiss" title="hide this notice" aria-label="hide this notice">&#10005;</button>
 </div>
@@ -1327,6 +1346,11 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   // scroll/pan gesture and can swallow it before our pointer handlers (the
   // in-cabinet joystick/buttons, camera orbit, etc.) ever see it move
   renderer.domElement.style.touchAction = 'none';
+  // focusable (but not part of normal Tab order) so the FOCUS button — and a
+  // plain click on the scene — can actually pull keyboard focus onto this
+  // document when it's sitting inside someone else's <iframe>
+  renderer.domElement.tabIndex = -1;
+  renderer.domElement.style.outline = 'none';
   appEl.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -5420,6 +5444,22 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     }
   }
 
+  // ---- keyboard focus button: pulls focus onto this document (the room/arcade
+  // canvas, or the game iframe if a game is open) so WASD/arrow keys respond
+  // even when this page was loaded inside someone else's <iframe> or an
+  // "about:blank" wrapper tab, where the browser otherwise leaves keyboard
+  // focus on the outer page until something in here is explicitly focused. ----
+  function focusForControls(){
+    try { window.focus(); } catch(e){}
+    try {
+      if (gameOpen) frame.focus();
+      else renderer.domElement.focus({ preventScroll: true });
+    } catch(e){}
+    showToast(gameOpen ? 'FOCUSED THE GAME \u2014 TRY ITS CONTROLS' : 'KEYBOARD FOCUSED \u2014 TRY WASD', '#39ff14', 2000);
+  }
+  window.focusArcadeControls = focusForControls; // reachable from the embed-check script above, which runs first
+  document.getElementById('focus-btn').addEventListener('click', () => { AudioEngine.click(); focusForControls(); });
+
   // ---- phone MENU button: folds Settings / Stats / Feedback / Floor / Fullscreen away ----
   const menuToggleBtn = document.getElementById('menu-toggle-btn');
   function setMenuOpen(open){
@@ -5464,6 +5504,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     updateMobileControlsVisibility();
     animate();
     setTimeout(announceDailyBonus, 1800);   // a moment after the arcade appears
+    // best-effort: if we can already tell this page is embedded, try grabbing
+    // keyboard focus without waiting for the player to find the FOCUS button
+    if (document.body.classList.contains('embedded')) { try { window.focus(); renderer.domElement.focus({ preventScroll: true }); } catch(e){} }
   }
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(reveal).catch(reveal);
