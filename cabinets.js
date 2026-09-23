@@ -115,6 +115,7 @@ window.ARCADE_CABINETS = [
       accent:0xb060e0, x:5.3, z:-2.4, rotY:-Math.PI/2, where:'RIGHT WALL',
       games:[
         { title: "Open in About Blank", file: "games/AboutBlank.html" },
+        { title: "About Blank Cloaker", file: "https://syntax-error-games.github.io/About-Blank/" },
         { title: "Cookie Clicker", file: "https://ozh.github.io/cookieclicker/" },
         { title: "Clicker Game", file: "games/ClickerGame.html" },
         { title: "Name Generator", file: "games/NameGenerator.html" },
@@ -143,7 +144,7 @@ window.ARCADE_CABINETS = [
         { title: "Synth", file: "games/synth-keyboard.html" },
         { title: "Music Player", file: "games/MusicPlayer.html" },
         { title: "Windows 95", file: "games/Win95.html" },
-        { title: "Window Rain", file: "games/windowrain.html" },
+        { title: "SmallPages", file: "https://9-7-8.github.io/SmallPages/index.html" },
         { title: "LED Matrix", file: "games/LEDmatrix.html" },
         { title: "Live Transit Map", file: "games/transitmap.html" },
         { title: "Cyber Terminal", file: "games/cyberterminal.html" },
