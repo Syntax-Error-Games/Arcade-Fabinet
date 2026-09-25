@@ -64,6 +64,7 @@ window.ARCADE_CABINETS = [
       games:[
         { title: "Mario Kart",        file: "https://ubghyper.github.io/GameList.github.io/MarioKart/" },
         { title: "Turbo Kart",        file: "https://bridge-mind.github.io/turbo-kart-rush/" },
+        { title: "Car Soccer",        file: "https://car-soccer.com/" },
         { title: "Rocket Arena",        file: "games/rocket-arena-3v3.html" },
         { title: "Apex Formula",        file: "https://bridge-mind.github.io/apex-formula/" },
         { title: "Polytrack",         file: "https://ubghyper.github.io/GameList.github.io/Polytrack-New/" },
