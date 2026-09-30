@@ -49,6 +49,7 @@ window.ARCADE_CABINETS = [
       accent:0xff5a1f, x:-2.3, z:-5.2, rotY:0, where:'BACK WALL',
       games:[
         { title: "Ultrakill", file: "https://ubghyper.github.io/GameList.github.io/Ultrakill/" },
+        { title: "Recoil", file: "https://ubghyper.github.io/GameList.github.io/Recoil/" },
         { title: "Nightfall", file: "games/nightfall-fps.html" },
         { title: "Jetpack Joyride", file: "https://emulatoros.github.io/gfile/jetpackjoyride/" },
         { title: "Neon Chamber", file: "games/NeonChamber.html" },
@@ -97,6 +98,7 @@ window.ARCADE_CABINETS = [
       accent:0x22e0ff, x:4.6, z:-5.2, rotY:0, where:'BACK WALL',
       games:[
         { title: "Minecraft", file: "https://ubghyper.github.io/GameList.github.io/Eaglercraft/" },
+        { title: "Jelly Mario", file: "https://ubghyper.github.io/GameList.github.io/Jelly-Mario/" },
         { title: "Voxelcraft", file: "games/voxelcraft.html" },
         { title: "Terraria", file: "https://ubghyper.github.io/GameList.github.io/Terraria/" },
         { title: "Sandvoxels", file: "https://freeonlinewebtools.github.io/UnblockedGamesUltra.github.io/" },
