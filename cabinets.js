@@ -120,6 +120,7 @@ window.ARCADE_CABINETS = [
       id:'toybox', title:'TOY BOX', tagline:'ODDS AND ENDS',
       accent:0xb060e0, x:5.3, z:-2.4, rotY:-Math.PI/2, where:'RIGHT WALL',
       games:[
+        { title: "Wacky Steps", file: "https://1games.io/wacky-steps" },
         { title: "Mini Metro", file: "https://ubghyper.github.io/GameList.github.io/Mini-Metro/" },
         { title: "Cookie Clicker", file: "https://ozh.github.io/cookieclicker/" },
         { title: "Clicker Game", file: "games/ClickerGame.html" },
