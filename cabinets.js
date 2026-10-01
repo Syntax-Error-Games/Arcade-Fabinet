@@ -100,7 +100,7 @@ window.ARCADE_CABINETS = [
       accent:0x22e0ff, x:4.6, z:-5.2, rotY:0, where:'BACK WALL',
       games:[
         { title: "Minecraft", file: "https://ubghyper.github.io/GameList.github.io/Eaglercraft/" },
-        { title: "Jelly Mario", file: "https://ubghyper.github.io/GameList.github.io/Jelly-Mario/" },
+        { title: "Jelly Mario", file: "https://jellymar.io/" },
         { title: "Voxelcraft", file: "games/voxelcraft.html" },
         { title: "Terraria", file: "https://ubghyper.github.io/GameList.github.io/Terraria/" },
         { title: "Sandvoxels", file: "https://freeonlinewebtools.github.io/UnblockedGamesUltra.github.io/" },
