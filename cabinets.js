@@ -63,6 +63,7 @@ window.ARCADE_CABINETS = [
       id:'racing', title:'RACING', tagline:'WHEELS AND SPEED',
       accent:0xff2bd6, x:0, z:-5.2, rotY:0, where:'BACK WALL',
       games:[
+        { title: "Escape Road",        file: "https://ubghyper.github.io/GameList.github.io/Escape-Road/" },
         { title: "Mario Kart",        file: "https://ubghyper.github.io/GameList.github.io/MarioKart/" },
         { title: "Turbo Kart",        file: "https://bridge-mind.github.io/turbo-kart-rush/" },
         { title: "Car Soccer",        file: "https://car-soccer.com/" },
@@ -79,6 +80,7 @@ window.ARCADE_CABINETS = [
       id:'adventure', title:'ADVENTURE', tagline:'JUMP AND EXPLORE',
       accent:0x39ff14, x:2.3, z:-5.2, rotY:0, where:'BACK WALL',
       games:[
+        { title: "Celeste", file: "https://ubghyper.github.io/GameList.github.io/Celeste/" },
         { title: "Hollow Knight", file: "https://ubghyper.github.io/GameList.github.io/hollowknight/" },
         { title: "Deepest Sword", file: "https://mathv2official.github.io/projects/deepestsword/index.html" },
         { title: "Pokemon Clone", file: "https://syntax-error-games.github.io/2026Q1_Fakemon/" },
@@ -130,6 +132,8 @@ window.ARCADE_CABINETS = [
       id:'portals', title:'PORTALS', tagline:'LINKS OUT',
       accent:0x00e5a0, x:5.3, z:0.2, rotY:-Math.PI/2, where:'RIGHT WALL',
       games:[
+        { title: "Arcade Cabinet", file: "https://syntax-error-games.github.io/Arcade-Fabinet/" },
+        { title: "Arcade Cabinet (In About:Blank)", file: "https://syntax-error-games.github.io/Arcade-Cabinet/" },
         { title: "Seraph", file: "https://crimsondev1.github.io/seraph/games/index.html" },
         { title: "Math V2", file: "https://mathv2official.github.io/projects.html" },
         { title: "UGBhyper", file: "https://ubghyper.github.io/index.html" },
