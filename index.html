@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>The Annex — Arcade Cabinet</title>
+<title>Arcade Cabinet</title>
 <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -798,7 +798,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 <div id="embed-banner">
   <div class="embed-text">
     This arcade is embedded in another page.
-    <a href="https://syntax-error-games.github.io/test/" target="_blank" rel="noopener">OPEN THE REAL ARCADE &nearr;</a>
+    <a href="https://syntax-error-games.github.io/Arcade-Fabinet/" target="_blank" rel="noopener">OPEN THE REAL ARCADE &nearr;</a>
   </div>
   <button id="embed-dismiss" title="hide this notice" aria-label="hide this notice">&#10005;</button>
 </div>
@@ -1430,16 +1430,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   gridTexture.wrapS = gridTexture.wrapT = THREE.RepeatWrapping;
   gridTexture.repeat.set(6, 6);
 
-  // Sized for the Annex's 27 cabinets (11 along the back wall, 8 each side)
-  // rather than the main site's 9 — same entrance/front-wall position
-  // (z=+7.5) so the prize counter, signage and spawn point below still
-  // line up; the hall just extends further back and wider to fit everyone.
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(38, 34),
+    new THREE.PlaneGeometry(24, 24),
     new THREE.MeshStandardMaterial({ map: gridTexture, roughness: 0.6, metalness: 0.2 })
   );
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, -0.02, -4.5); // nudge below y=0 so it isn't coplanar with the cabinet bases or the room's bottom face
+  floor.position.y = -0.02; // nudge below y=0 so it isn't coplanar with the cabinet bases or the room's bottom face
   scene.add(floor);
 
   const wallCanvas = document.createElement('canvas');
@@ -1458,8 +1454,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 
   // The room is now a proper arcade hall rather than a huge empty box, so
   // the cabinets on the left and right actually read as standing against walls.
-  const room = new THREE.Mesh(new THREE.BoxGeometry(27, 8.3, 24), wallMat);
-  room.position.set(0, 3.9, -4.5);
+  const room = new THREE.Mesh(new THREE.BoxGeometry(13, 8.3, 15), wallMat);
+  room.position.y = 3.9;
   scene.add(room);
 
   // Nondescript player — plain head, no face.
@@ -1539,14 +1535,14 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   function addStrip(x, z, colorIndex){
     addNeon(0.06, 5, 0.06, x, 2.6, z, colorIndex % 2 ? 0x22e0ff : 0xff2bd6, 0.8);
   }
-  [-12, -6, 0, 6, 12].forEach((x, i) => addStrip(x, -16.35, i));
-  [-11, -5.5, 0, 5].forEach((z, i) => { addStrip(-13.2, z, i); addStrip(13.2, z, i + 1); });
+  [-5.75, -2.875, 0, 2.875, 5.75].forEach((x, i) => addStrip(x, -7.35, i));
+  [-5.0, -1.0, 3.0, 6.4].forEach((z, i) => { addStrip(-6.35, z, i); addStrip(6.35, z, i + 1); });
 
   // horizontal neon tubes running around the top of the hall, above the machines
-  addNeon(26, 0.05, 0.05, 0, 3.35, -16.38, 0xff2bd6, 1.0);
-  addNeon(26, 0.05, 0.05, 0, 3.15, -16.38, 0x22e0ff, 1.0);
-  addNeon(0.05, 0.05, 23, -13.38, 3.25, -4.5, 0x22e0ff, 1.0);
-  addNeon(0.05, 0.05, 23,  13.38, 3.25, -4.5, 0xff2bd6, 1.0);
+  addNeon(12.6, 0.05, 0.05, 0, 3.35, -7.38, 0xff2bd6, 1.0);
+  addNeon(12.6, 0.05, 0.05, 0, 3.15, -7.38, 0x22e0ff, 1.0);
+  addNeon(0.05, 0.05, 14.4, -6.38, 3.25, 0, 0x22e0ff, 1.0);
+  addNeon(0.05, 0.05, 14.4,  6.38, 3.25, 0, 0xff2bd6, 1.0);
 
   // the big back-wall neon sign (emissive-only, so it costs no extra lights)
   const signTexture = makeCanvasTex(1024, 300, (g, w, h) => {
@@ -1561,7 +1557,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   });
   const signMat = new THREE.MeshBasicMaterial({ map: signTexture, transparent: true, opacity: 0.14, depthWrite: false });
   const neonSign = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.64), signMat);
-  neonSign.position.set(0, 4.75, -16.42);
+  neonSign.position.set(0, 4.75, -7.42);
   scene.add(neonSign);
   let signFlickerUntil = 0, signNextFlicker = 3000;
 
@@ -1570,9 +1566,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   const dustPositions = new Float32Array(DUST_COUNT * 3);
   const dustSeeds = new Float32Array(DUST_COUNT);
   for (let i = 0; i < DUST_COUNT; i++) {
-    dustPositions[i*3]   = (Math.random() - 0.5) * 25;
+    dustPositions[i*3]   = (Math.random() - 0.5) * 11;
     dustPositions[i*3+1] = 0.3 + Math.random() * 4.4;
-    dustPositions[i*3+2] = -4.5 + (Math.random() - 0.5) * 22;
+    dustPositions[i*3+2] = (Math.random() - 0.5) * 12.5;
     dustSeeds[i] = Math.random();
   }
   const dustGeo = new THREE.BufferGeometry();
@@ -2372,9 +2368,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   // Now that cabinets line three walls, the walkable floor is the open
   // middle of the hall. These bounds keep you about a metre clear of every
   // machine — close enough to trigger it, never clipping into it.
-  // (Widened for the Annex's bigger back/side walls; maxZ is unchanged
-  // since the entrance edge of the room didn't move.)
-  const BOUNDS = { minX:-10.5, maxX:10.5, minZ:-13.2, maxZ:6.4 };
+  const BOUNDS = { minX:-4.2, maxX:4.2, minZ:-4.2, maxZ:6.4 };
 
   // =====================================================================
   // Tickets + character customization
@@ -3060,11 +3054,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   const mapOverlay = document.getElementById('map-overlay');
   const mapList = document.getElementById('map-list');
   const mapSub = document.getElementById('map-sub');
-  // top-down plan: 7.5px per metre (the Annex's room is much bigger than
-  // the main hall's), room centred in a 228x268 box. The room itself isn't
-  // centred on z=0 here (the entrance edge stayed put while the back wall
-  // moved out), so PLAN_CY is offset to match.
-  const PLAN_S = 7.5, PLAN_CX = 114, PLAN_CY = 164;
+  // top-down plan: 16px per metre, room centred in a 228x260 box
+  const PLAN_S = 16, PLAN_CX = 114, PLAN_CY = 130;
   function planX(x){ return PLAN_CX + x * PLAN_S; }
   function planZ(z){ return PLAN_CY + z * PLAN_S; }
   const mapPlanWrap = document.getElementById('map-plan-wrap');
@@ -3084,20 +3075,18 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   function renderFloorMap(){
     mapSub.textContent = cabinets.length + ' CABINETS \u2022 TAP ONE TO WARP THERE';
 
-    let svg = '<svg id="map-plan" viewBox="0 0 228 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="floor plan of the annex">';
-    svg += '<rect class="plan-room" x="13" y="74" width="202" height="180" rx="3"/>';
-    for (let g = -12; g <= 12; g += 3) {
-      svg += '<line class="plan-grid" x1="' + planX(g) + '" y1="76" x2="' + planX(g) + '" y2="252"/>';
+    let svg = '<svg id="map-plan" viewBox="0 0 228 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="floor plan of the arcade">';
+    svg += '<rect class="plan-room" x="10" y="10" width="208" height="240" rx="3"/>';
+    for (let g = -6; g <= 6; g += 2) {
+      svg += '<line class="plan-grid" x1="' + planX(g) + '" y1="12" x2="' + planX(g) + '" y2="248"/>';
+      svg += '<line class="plan-grid" x1="12" y1="' + planZ(g) + '" x2="216" y2="' + planZ(g) + '"/>';
     }
-    for (let g = -16; g <= 7; g += 3) {
-      svg += '<line class="plan-grid" x1="15" y1="' + planZ(g) + '" x2="213" y2="' + planZ(g) + '"/>';
-    }
-    svg += '<rect class="plan-door" x="100" y="251" width="28" height="4"/>';
-    svg += '<text class="plan-label" x="114" y="264">ENTRANCE</text>';
-    svg += '<rect class="plan-prize" x="' + (planX(PRIZE_POS.x) - 18) + '" y="238" width="36" height="12" rx="2"/>' +
-           '<text class="plan-label plan-prize-label" x="' + planX(PRIZE_POS.x) + '" y="247">PRIZES</text>';
-    svg += '<rect class="plan-board" x="' + (planX(3.6) - 16) + '" y="240" width="32" height="8" rx="2"/>' +
-           '<text class="plan-label plan-board-label" x="' + planX(3.6) + '" y="247">SCORES</text>';
+    svg += '<rect class="plan-door" x="100" y="247" width="28" height="4"/>';
+    svg += '<text class="plan-label" x="114" y="262">ENTRANCE</text>';
+    svg += '<rect class="plan-prize" x="' + (planX(PRIZE_POS.x) - 18) + '" y="234" width="36" height="12" rx="2"/>' +
+           '<text class="plan-label plan-prize-label" x="' + planX(PRIZE_POS.x) + '" y="243">PRIZES</text>';
+    svg += '<rect class="plan-board" x="' + (planX(3.6) - 16) + '" y="236" width="32" height="8" rx="2"/>' +
+           '<text class="plan-label plan-board-label" x="' + planX(3.6) + '" y="243">SCORES</text>';
     cabinets.forEach((cab, i) => {
       const cx = planX(cab.group.position.x), cz = planZ(cab.group.position.z);
       const deg = -(cab.def.rotY || 0) * 180 / Math.PI; // SVG rotates clockwise, three.js counter-clockwise
@@ -3854,11 +3843,12 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   })();
 
   // =====================================================================
-  // Portal — a free-standing arch that links back to the main arcade
-  // (same engine, different repo). Using it just navigates there in a
-  // new tab, the same way the main site's portal gets you here.
+  // Portal — a free-standing arch that links out to the Annex, a second
+  // arcade (same engine, different repo) with its own ~300 games. Unlike
+  // a cabinet this doesn't open an overlay; using it just navigates to
+  // the Annex site in a new tab.
   // =====================================================================
-  const MAIN_SITE_URL = 'https://syntax-error-games.github.io/Arcade-Fabinet/';
+  const ANNEX_URL = 'https://syntax-error-games.github.io/test/';
   const PORTAL_COLOR = 0x8a5bff;
   const PORTAL_NEAR = 2.6;
   let nearPortal = false;
@@ -3906,7 +3896,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       g.shadowColor = '#9a6eff'; g.shadowBlur = 18;
       g.fillStyle = '#e4d9ff';
       g.font = "22px 'Press Start 2P', monospace";
-      g.fillText('MAIN ARCADE', w / 2, h / 2);
+      g.fillText('THE ANNEX', w / 2, h / 2);
     });
     const labelMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.65), new THREE.MeshBasicMaterial({ map: labelTex, transparent: true, depthWrite: false }));
     labelMesh.position.set(0, 2.6, 0);
@@ -3929,7 +3919,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
   })();
 
   function usePortal(){
-    window.open(MAIN_SITE_URL, '_blank', 'noopener');
+    window.open(ANNEX_URL, '_blank', 'noopener');
   }
 
   function tryJump(){
@@ -4140,7 +4130,7 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         roomPrompt.style.color = '#8a5bff';
         roomPrompt.style.textShadow = '0 0 8px #8a5bff';
         roomPrompt.style.borderColor = mixHex(0x8a5bff, 0.55);
-        roomPrompt.innerHTML = 'BACK TO THE MAIN ARCADE<br><span>' + (isMobile ? 'tap it' : 'click it or press E / ENTER') + ' &bull; opens in a new tab</span>';
+        roomPrompt.innerHTML = 'ENTER THE ANNEX<br><span>' + (isMobile ? 'tap it' : 'click it or press E / ENTER') + ' &bull; ~300 more games, opens in a new tab</span>';
       }
     }
     if (nearCab || nearPrize || nearPortal) {
@@ -5052,8 +5042,8 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     updatePlayer(dt);
     controls.update();
     // orbiting can otherwise swing the camera out through a wall, into the void
-    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -12.5, 12.5);
-    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -16.2, 7.2);
+    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -6.2, 6.2);
+    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -7.2, 7.2);
     updateMobileControlsVisibility();
 
     const pulse = Math.sin(now * 0.004) * 0.2;
