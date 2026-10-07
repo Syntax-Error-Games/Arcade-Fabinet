@@ -3842,6 +3842,86 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     };
   })();
 
+  // =====================================================================
+  // Portal — a free-standing arch that links out to the Annex, a second
+  // arcade (same engine, different repo) with its own ~300 games. Unlike
+  // a cabinet this doesn't open an overlay; using it just navigates to
+  // the Annex site in a new tab.
+  // =====================================================================
+  const ANNEX_URL = 'https://syntax-error-games.github.io/test/';
+  const PORTAL_COLOR = 0x8a5bff;
+  const PORTAL_NEAR = 2.6;
+  let nearPortal = false;
+  const PORTAL_POS = new THREE.Vector3(0, 0, 0.5);
+
+  const portalGroup = (function(){
+    const group = new THREE.Group();
+    group.position.copy(PORTAL_POS);
+    scene.add(group);
+
+    const ringMat = new THREE.MeshStandardMaterial({ color: PORTAL_COLOR, emissive: PORTAL_COLOR, emissiveIntensity: 0.7, roughness: 0.35, metalness: 0.4 });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.05, 0.11, 12, 32), ringMat);
+    ring.position.y = 1.4;
+    group.add(ring);
+
+    const swirlCanvas = document.createElement('canvas');
+    swirlCanvas.width = swirlCanvas.height = 256;
+    const sctx = swirlCanvas.getContext('2d');
+    function drawSwirl(t){
+      sctx.clearRect(0, 0, 256, 256);
+      sctx.save();
+      sctx.translate(128, 128);
+      for (let i = 0; i < 5; i++) {
+        sctx.rotate(0.17 + t * (i % 2 ? 0.02 : -0.02));
+        const r = 34 + i * 18;
+        sctx.strokeStyle = i % 2 ? 'rgba(154,110,255,0.55)' : 'rgba(34,224,255,0.4)';
+        sctx.lineWidth = 9;
+        sctx.beginPath();
+        sctx.arc(0, 0, r, t * (i % 2 ? 1 : -1), t * (i % 2 ? 1 : -1) + 2.4);
+        sctx.stroke();
+      }
+      sctx.restore();
+    }
+    drawSwirl(0);
+    const swirlTex = new THREE.CanvasTexture(swirlCanvas);
+    const swirl = new THREE.Mesh(
+      new THREE.CircleGeometry(0.95, 32),
+      new THREE.MeshBasicMaterial({ map: swirlTex, color: 0x241640, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    swirl.position.y = 1.4;
+    group.add(swirl);
+
+    const labelTex = makeCanvasTex(512, 128, (g, w, h) => {
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.shadowColor = '#9a6eff'; g.shadowBlur = 18;
+      g.fillStyle = '#e4d9ff';
+      g.font = "22px 'Press Start 2P', monospace";
+      g.fillText('THE ANNEX', w / 2, h / 2);
+    });
+    const labelMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.65), new THREE.MeshBasicMaterial({ map: labelTex, transparent: true, depthWrite: false }));
+    labelMesh.position.set(0, 2.6, 0);
+    group.add(labelMesh);
+
+    const glowTex = makeCanvasTex(128, 128, (g, w, h) => {
+      const v = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+      v.addColorStop(0, 'rgba(255,255,255,0.9)'); v.addColorStop(0.5, 'rgba(255,255,255,0.25)'); v.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = v; g.fillRect(0, 0, w, h);
+    });
+    const floorGlow = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2), new THREE.MeshBasicMaterial({ map: glowTex, color: PORTAL_COLOR, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
+    floorGlow.rotation.x = -Math.PI / 2;
+    floorGlow.position.y = 0.01;
+    group.add(floorGlow);
+
+    arcadeStrips.push({ material: ringMat, userData: { onI: 0.7 } });
+    (function tick(){ drawSwirl(performance.now() * 0.001); swirlTex.needsUpdate = true; requestAnimationFrame(tick); })();
+
+    return group;
+  })();
+
+  function usePortal(){
+    window.open(ANNEX_URL, '_blank', 'noopener');
+  }
+
   function tryJump(){
     if (Math.abs(player.position.y-FLOOR_Y)<0.03) { jumpVelocity=JUMP_SPEED; AudioEngine.jump(); }
   }
@@ -4024,14 +4104,18 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
       roomPrompt.style.display = 'none';
       floorGuide.style.display = 'none';
       nearPrize = false;
+      nearPortal = false;
       return;
     }
     const found = findNearestCabinet();
-    // the prize counter only counts when no cabinet is in range (they're far apart anyway)
+    // the prize counter and the portal only count when no cabinet is in
+    // range (they're all far apart from each other anyway)
     const prizeNow = !found && Math.hypot(player.position.x - PRIZE_POS.x, player.position.z - PRIZE_POS.z) < PRIZE_NEAR;
-    if (found !== nearCab || prizeNow !== nearPrize) {
+    const portalNow = !found && !prizeNow && Math.hypot(player.position.x - PORTAL_POS.x, player.position.z - PORTAL_POS.z) < PORTAL_NEAR;
+    if (found !== nearCab || prizeNow !== nearPrize || portalNow !== nearPortal) {
       nearCab = found;
       nearPrize = prizeNow;
+      nearPortal = portalNow;
       if (nearCab) {
         roomPrompt.style.color = hexStr(nearCab.accent);
         roomPrompt.style.textShadow = '0 0 8px ' + hexStr(nearCab.accent);
@@ -4042,9 +4126,14 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         roomPrompt.style.textShadow = '0 0 8px #ffe600';
         roomPrompt.style.borderColor = mixHex(0xffe600, 0.55);
         roomPrompt.innerHTML = 'PRIZE COUNTER<br><span>' + (isMobile ? 'tap it' : 'click it or press E / ENTER') + ' &bull; spend your tickets</span>';
+      } else if (nearPortal) {
+        roomPrompt.style.color = '#8a5bff';
+        roomPrompt.style.textShadow = '0 0 8px #8a5bff';
+        roomPrompt.style.borderColor = mixHex(0x8a5bff, 0.55);
+        roomPrompt.innerHTML = 'ENTER THE ANNEX<br><span>' + (isMobile ? 'tap it' : 'click it or press E / ENTER') + ' &bull; ~300 more games, opens in a new tab</span>';
       }
     }
-    if (nearCab || nearPrize) {
+    if (nearCab || nearPrize || nearPortal) {
       powerOnArcade();
       roomPrompt.style.display = 'block';
       floorGuide.style.display = 'none';
@@ -4323,6 +4412,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     } else if (phase === PHASE_ROOM && nearPrize) {
       const hit = raycaster.intersectObject(prizeGroup, true)[0];
       if (hit) cursor = 'pointer';
+    } else if (phase === PHASE_ROOM && nearPortal) {
+      const hit = raycaster.intersectObject(portalGroup, true)[0];
+      if (hit) cursor = 'pointer';
     }
 
     // camera-zoom-on-wheel is only ever appropriate in room mode; in arcade
@@ -4479,6 +4571,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
     } else if (phase === PHASE_ROOM && nearPrize) {
       setPointerFromEvent(e.clientX, e.clientY);
       if (raycaster.intersectObject(prizeGroup, true)[0]) openPrizeCounter();
+    } else if (phase === PHASE_ROOM && nearPortal) {
+      setPointerFromEvent(e.clientX, e.clientY);
+      if (raycaster.intersectObject(portalGroup, true)[0]) usePortal();
     }
   });
   renderer.domElement.addEventListener('pointercancel', e => { releaseJoystick(e); dragStartPos = null; });
@@ -4553,6 +4648,9 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
         e.preventDefault();
       } else if ((k === 'Enter' || lower === 'e') && nearPrize) {
         openPrizeCounter();
+        e.preventDefault();
+      } else if ((k === 'Enter' || lower === 'e') && nearPortal) {
+        usePortal();
         e.preventDefault();
       }
       return;
@@ -5517,4 +5615,4 @@ html.ios-safari-tip #fullscreen-btn{bottom:calc(86px + env(safe-area-inset-botto
 })();
 </script>
 </body>
-  </html>
+                        </html>
